@@ -11,3 +11,4 @@
 - Alfonso Orbe Coka (LeonidasEDM)
 - William Mollaymeri (WilliamM23)
 - Rafael Huang (Rafael Huang)
+- Nathan D'Agostino (NathanDOp)
