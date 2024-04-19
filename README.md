@@ -17,3 +17,4 @@
 - Rafael Huang ([Rafael-Huang](https://github.com/Rafael-Huang))
 - Nathan D'Agostino ([NathanDOp](https://github.com/NathanDOp))
 - Antonio Talavera ([Antonio1203](https://github.com/Antonio1203))
+- Trevor Chessnoe ([TrevorChess25](https://github.com/TrevorChess25))
