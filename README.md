@@ -14,3 +14,4 @@
 - Rafael Huang (Rafael Huang)
 - Nathan D'Agostino (NathanDOp)
 - Antonio Talavera (Antonio1203)
+- Jonathan Howard (Jr16h)
