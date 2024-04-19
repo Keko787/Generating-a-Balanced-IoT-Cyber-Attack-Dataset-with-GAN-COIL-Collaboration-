@@ -11,7 +11,7 @@
 - Ryan Bussert ([RyanBuss01](https://github.com/RyanBuss01))
 - Dominique Lucien ([DevAudDom](https://github.com/DevAudDom))
 - Mikayla Ries ([mries243](https://github.com/mries243))
-- Tim Meinert ([Meeatbaag](https://github.com/Meeatbaag))
+- Tim Meinert ([tmeinert2020](https://github.com/tmeinert2020))
 - Alfonso Orbe Coka ([LeonidasEDM](https://github.com/LeonidasEDM))
 - William Mollaymeri ([WilliamM23](https://github.com/WilliamM23))
 - Rafael Huang ([Rafael-Huang](https://github.com/Rafael-Huang))
