@@ -6,3 +6,4 @@
 - David West (DaveWestFGCU)
 - Drake Walsh (Drizzy Drake)
 - Dominique Lucien (DevAudDom)
+- Mikayla Ries (Mikayla Ries)
