@@ -7,3 +7,4 @@
 - Drake Walsh (Drizzy Drake)
 - Dominique Lucien (DevAudDom)
 - Mikayla Ries (Mikayla Ries)
+- Tim Meinert (Meeatbaag)
