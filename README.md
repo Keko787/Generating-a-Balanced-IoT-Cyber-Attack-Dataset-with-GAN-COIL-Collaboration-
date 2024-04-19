@@ -2,3 +2,4 @@
 
 ## Contributors:
 - Vasil Ivanov III (Fade2BlackOps)
+- Dominique Lucien (DevAudDom)
