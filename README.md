@@ -7,7 +7,7 @@
 - Drake Walsh (Drizzy Drake)
 - Ryan Bussert (RyanBuss01)
 - Dominique Lucien (DevAudDom)
-- Mikayla Ries (Mikayla Ries)
+- Mikayla Ries (mries243)
 - Tim Meinert (Meeatbaag)
 - Alfonso Orbe Coka (LeonidasEDM)
 - William Mollaymeri (WilliamM23)
