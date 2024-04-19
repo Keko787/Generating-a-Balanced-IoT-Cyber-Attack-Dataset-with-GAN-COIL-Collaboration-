@@ -1,4 +1,4 @@
-# CEN-3078-Class-Project-Balancing-Gan-Algorithm-for-cyber-attack-datasets
+# CEN 3078 Class Project: Balancing GAN Algorithm for Cyberattack Datasets
 
 ## Contributors:
 - Vasil Ivanov III (Fade2BlackOps)
