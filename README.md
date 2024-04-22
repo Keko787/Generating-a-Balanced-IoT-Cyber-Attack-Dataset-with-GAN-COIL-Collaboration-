@@ -20,3 +20,4 @@
 - Trevor Chessnoe ([TrevorChess25](https://github.com/TrevorChess25))
 - Jacob Aronowitz ([JacobAronowitz](https://github.com/JacobAronowitz))
 - William Murphy ([William-M3](https://github.com/William-M3))
+- Daniel De Sousa ([MrL935](https://github.com/MrL935))
