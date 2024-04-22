@@ -19,5 +19,6 @@
 - Antonio Talavera ([Antonio1203](https://github.com/Antonio1203))
 - Trevor Chessnoe ([TrevorChess25](https://github.com/TrevorChess25))
 - Jacob Aronowitz ([JacobAronowitz](https://github.com/JacobAronowitz))
+- Jason Exantus [jason060601](https://github.com/jason060601)
 - William Murphy ([William-M3](https://github.com/William-M3))
 - Daniel De Sousa ([MrL935](https://github.com/MrL935))
