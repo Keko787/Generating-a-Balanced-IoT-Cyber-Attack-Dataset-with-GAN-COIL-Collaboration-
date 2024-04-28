@@ -91,7 +91,7 @@ num_cols = [
        'Max', 'AVG', 'Std', 'Tot size', 'IAT', 'Number', 'Magnitue',
        'Radius', 'Covariance', 'Variance', 'Weight',
 ]
-cat_cols = ['label']
+cat_cols = []
 
 # feature scaling
 scaler = StandardScaler()
@@ -144,10 +144,10 @@ print(full_data[:2])
 print(full_data.shape)
 
 # Relabel the 'label' column using dict_7classes
-full_data['label'] = full_data['label'].map(dict_7classes)
+# full_data['label'] = full_data['label'].map(dict_7classes)
 
 # # Relabel the 'label' column using dict_2classes
-# full_data['label'] = full_data['label'].map(dict_2classes)
+full_data['label'] = full_data['label'].map(dict_2classes)
 
 # Assuming 'label' is the column name for the labels in the DataFrame `synth_data`
 unique_labels = full_data['label'].nunique()
@@ -184,10 +184,20 @@ print("Cluster counts in the minority class:")
 print(cluster_counts)
 
 # Optionally, assign these cluster labels back to the main data set to form new classes or insights
-minority_class_data['label'] = labels
+# minority_class_data['label'] = labels
 
 # Merging this back to the full dataset if needed
-# full_data.loc[full_data['label'] == 'Benign'] = labels
+full_data.loc[full_data['label'] == 'Benign', 'Cluster'] = labels
+
+label_encoder = LabelEncoder()
+full_data['label'] = label_encoder.fit_transform(full_data['label'])
+
+# Impute NaN values in 'label' and 'Cluster' with the mode (most frequent value)
+for column in ['label', 'Cluster']:
+    mode_value = full_data[column].mode()[0]
+    full_data[column].fillna(mode_value, inplace=True)
+
+print(full_data[['label', 'Cluster']].isna().sum())
 
 # Continue with your analysis or synthesis
 print(full_data.head())
@@ -198,8 +208,8 @@ print(full_data.head())
 
 #Define the Conditional GAN and training parameters
 noise_dim = 46
-dim = 46
-batch_size = 128
+dim = 47
+batch_size = 500
 beta_1 = 0.5
 beta_2 = 0.9
 
@@ -219,7 +229,7 @@ train_args = TrainParameters(epochs=epochs,
                              cache_prefix='cgan_cyberAttack',
                              sample_interval=log_step,
                              label_dim=-1,
-                             labels=(0,1))
+                             labels=(0, 1))
 
 #create a bining (WHY)
 # minority_class_data[''] = pd.cut(minority_class_data[''], 5).cat.codes
@@ -228,7 +238,7 @@ train_args = TrainParameters(epochs=epochs,
 synth = RegularSynthesizer(modelname='cgan', model_parameters=gan_args)
 
 #Training the Conditional GAN
-synth.fit(data=minority_class_data, label_cols=['label'], train_arguments=train_args, num_cols=num_cols, cat_cols=cat_cols)
+synth.fit(data=full_data, label_cols=['label', 'Cluster'], train_arguments=train_args, num_cols=num_cols, cat_cols=cat_cols)
 
 #Saving the synthesizer
 synth.save('cyberattack_cgan_model.pkl')
