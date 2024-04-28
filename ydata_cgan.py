@@ -40,7 +40,7 @@ import time
 from ydata_synthetic.synthesizers.regular import RegularSynthesizer
 from ydata_synthetic.synthesizers import ModelParameters, TrainParameters
 
-
+import sklearn.cluster as cluster
 from sklearn.model_selection import cross_val_score
 from sklearn.model_selection import cross_val_predict
 from sklearn.model_selection import KFold
@@ -149,9 +149,6 @@ full_data['label'] = full_data['label'].map(dict_7classes)
 # # Relabel the 'label' column using dict_2classes
 # full_data['label'] = full_data['label'].map(dict_2classes)
 
-# Splitting the dataset into train and condition
-train_data = full_data[full_data['label'] == 'YourMinorityClass'].copy()
-
 # Assuming 'label' is the column name for the labels in the DataFrame `synth_data`
 unique_labels = full_data['label'].nunique()
 
@@ -168,18 +165,46 @@ print(full_data.head())
 data = full_data
 
 #########################################################
+#    Clustering of Minority Class Data    #
+#########################################################
+# Assuming 'Attack' is the minority class; adjust as per your dataset analysis
+minority_class_data = full_data.loc[full_data['label'] == 'Benign'].copy()
+
+# Ensure all data for clustering is numeric
+clustering_features = [col for col in num_cols if col in minority_class_data.columns]  # Ensure these are only numeric
+
+# KMeans Clustering
+algorithm = cluster.KMeans
+args, kwds = (), {'n_clusters': 2, 'random_state': 0}
+labels = algorithm(*args, **kwds).fit_predict(minority_class_data[clustering_features])
+
+# Creating a new DataFrame to see how many items are in each cluster
+cluster_counts = pd.DataFrame([[np.sum(labels == i)] for i in np.unique(labels)], columns=['count'], index=np.unique(labels))
+print("Cluster counts in the minority class:")
+print(cluster_counts)
+
+# Optionally, assign these cluster labels back to the main data set to form new classes or insights
+minority_class_data['label'] = labels
+
+# Merging this back to the full dataset if needed
+# full_data.loc[full_data['label'] == 'Benign'] = labels
+
+# Continue with your analysis or synthesis
+print(full_data.head())
+
+#########################################################
 #    Defining Training Parameters and Training Model    #
 #########################################################
 
 #Define the Conditional GAN and training parameters
-noise_dim = 32
-dim = 128
+noise_dim = 46
+dim = 46
 batch_size = 128
 beta_1 = 0.5
 beta_2 = 0.9
 
 log_step = 100
-epochs = 2 + 1
+epochs = 1 + 1
 learning_rate = 5e-4
 models_dir = '../cache'
 
@@ -191,22 +216,22 @@ gan_args = ModelParameters(batch_size=batch_size,
                            layers_dim=dim)
 
 train_args = TrainParameters(epochs=epochs,
-                             cache_prefix='cgan_cybarAttack',
+                             cache_prefix='cgan_cyberAttack',
                              sample_interval=log_step,
                              label_dim=-1,
                              labels=(0,1))
 
-#create a bining
-fraud_w_classes['Amount'] = pd.cut(fraud_w_classes['Amount'], 5).cat.codes
+#create a bining (WHY)
+# minority_class_data[''] = pd.cut(minority_class_data[''], 5).cat.codes
 
 #Init the Conditional GAN providing the index of the label column as one of the arguments
 synth = RegularSynthesizer(modelname='cgan', model_parameters=gan_args)
 
 #Training the Conditional GAN
-synth.fit(data=fraud_w_classes, label_cols=['label'], train_arguments=train_args, num_cols=num_cols, cat_cols=cat_cols)
+synth.fit(data=minority_class_data, label_cols=['label'], train_arguments=train_args, num_cols=num_cols, cat_cols=cat_cols)
 
 #Saving the synthesizer
-synth.save('creditcard_cgan_model.pkl')
+synth.save('cyberattack_cgan_model.pkl')
 
 
 #########################################################
@@ -214,7 +239,7 @@ synth.save('creditcard_cgan_model.pkl')
 #########################################################
 
 # Loading model
-synth = RegularSynthesizer.load('attack_wgangp_model_3.pkl')
+synth = RegularSynthesizer.load('cyberattack_cgan_model.pkl')
 
 # Generating synthetic samples
 synth_data = synth.sample(1000)

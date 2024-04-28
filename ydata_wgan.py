@@ -40,6 +40,7 @@ import time
 from ydata_synthetic.synthesizers.regular import RegularSynthesizer
 from ydata_synthetic.synthesizers import ModelParameters, TrainParameters
 
+import sklearn.cluster as cluster
 from sklearn.model_selection import cross_val_score
 from sklearn.model_selection import cross_val_predict
 from sklearn.model_selection import KFold
@@ -164,6 +165,34 @@ print(full_data.head())
 data = full_data
 
 #########################################################
+#    Clustering of Minority Class Data    #
+#########################################################
+# # Assuming 'Attack' is the minority class; adjust as per your dataset analysis
+# minority_class_data = full_data.loc[full_data['label'] == 'Benign'].copy()
+#
+# # Ensure all data for clustering is numeric
+# clustering_features = [col for col in num_cols if col in minority_class_data.columns]  # Ensure these are only numeric
+#
+# # KMeans Clustering
+# algorithm = cluster.KMeans
+# args, kwds = (), {'n_clusters': 2, 'random_state': 0}
+# labels = algorithm(*args, **kwds).fit_predict(minority_class_data[clustering_features])
+#
+# # Creating a new DataFrame to see how many items are in each cluster
+# cluster_counts = pd.DataFrame([[np.sum(labels == i)] for i in np.unique(labels)], columns=['count'], index=np.unique(labels))
+# print("Cluster counts in the minority class:")
+# print(cluster_counts)
+#
+# # Optionally, assign these cluster labels back to the main data set to form new classes or insights
+# minority_class_data['label'] = labels
+#
+# # Merging this back to the full dataset if needed
+# # full_data.loc[full_data['label'] == 'Benign'] = labels
+#
+# # Continue with your analysis or synthesis
+# print(full_data.head())
+
+#########################################################
 #    Defining Training Parameters and Training Model    #
 #########################################################
 
@@ -173,7 +202,7 @@ dim = 46
 batch_size = 500
 
 log_step = 100
-epochs = 10 + 1
+epochs = 0 + 1
 learning_rate = [5e-4, 3e-3]
 beta_1 = 0.5
 beta_2 = 0.9
@@ -190,18 +219,19 @@ train_args = TrainParameters(epochs=epochs,
                              sample_interval=log_step)
 
 # Training the model
-synth = RegularSynthesizer(modelname='wgangp', model_parameters=gan_args, n_critic=2)
+synth = RegularSynthesizer(modelname='wgangp', model_parameters=gan_args, n_critic=10)
+# synth.fit(data=data, train_arguments=train_args, num_cols=num_cols, cat_cols=cat_cols)
+# synth.fit(data=minority_class_data, train_arguments=train_args, num_cols=num_cols, cat_cols=cat_cols)
 synth.fit(data, train_args, num_cols, cat_cols)
-
 # Saving training model
-synth.save('attack_wgangp_model_BinaryTest.pkl')
+synth.save('attack_wgan_model_BinaryTest_cluster.pkl')
 
 #########################################################
 #    Loading and sampling from a trained synthesizer    #
 #########################################################
 
 # Loading model
-synth = RegularSynthesizer.load('attack_wgangp_model_BinaryTest.pkl')
+synth = RegularSynthesizer.load('attack_wgan_model_BinaryTest_cluster.pkl')
 
 # Generating synthetic samples
 synth_data = synth.sample(1000)
