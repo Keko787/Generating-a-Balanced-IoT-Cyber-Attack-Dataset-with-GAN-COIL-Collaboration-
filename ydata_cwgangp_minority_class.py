@@ -37,12 +37,10 @@ from tqdm import tqdm
 import os
 import time
 
-import matplotlib.pyplot as plt
-
 from ydata_synthetic.synthesizers.regular import RegularSynthesizer
 from ydata_synthetic.synthesizers import ModelParameters, TrainParameters
 
-
+import sklearn.cluster as cluster
 from sklearn.model_selection import cross_val_score
 from sklearn.model_selection import cross_val_predict
 from sklearn.model_selection import KFold
@@ -54,7 +52,6 @@ from sklearn.metrics import confusion_matrix
 from sklearn.metrics import matthews_corrcoef
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, f1_score
-from sklearn.metrics import confusion_matrix
 
 # Print versions and device configurations after ensuring GPU settings
 print("TensorFlow version:", tf.__version__)
@@ -64,21 +61,7 @@ print("TensorFlow version:", tf.__version__)
 # print(tf.config.list_physical_devices('GPU'), "\n")
 
 #########################################################
-#    Loading GAN Model and Generating Data   #
-#########################################################
-synth = RegularSynthesizer.load('cyberattack_cwgangp_model.pkl')
-
-# Optional Condition array
-cond_array = pd.DataFrame(2000*[0, 1], columns=['label'])  # for cgans
-
-# Generating synthetic samples
-synth_data = synth.sample(cond_array)  # for cgans
-
-# synth_data = synth.sample(100000)  # for non cgans
-
-print(synth_data)
-#########################################################
-#    Loading Real Data   #
+#    Loading the CSV    #
 #########################################################
 DATASET_DIRECTORY = './archive/'          # If your dataset is within your python project directory, change this to the relative path to your dataset
 csv_filepaths = [filename for filename in os.listdir(DATASET_DIRECTORY) if filename.endswith('.csv')]
@@ -108,7 +91,7 @@ num_cols = [
        'Max', 'AVG', 'Std', 'Tot size', 'IAT', 'Number', 'Magnitue',
        'Radius', 'Covariance', 'Variance', 'Weight',
 ]
-cat_cols = ['label']
+cat_cols = []
 
 # feature scaling
 scaler = StandardScaler()
@@ -164,138 +147,146 @@ print(full_data.shape)
 # full_data['label'] = full_data['label'].map(dict_7classes)
 
 # # Relabel the 'label' column using dict_2classes
-# full_data['label'] = full_data['label'].map(dict_2classes)
-
-# prep the data to be inputted into model
-data = full_data
-#########################################################
-#    Analyzing the Synthetic Data   #
-#########################################################
+full_data['label'] = full_data['label'].map(dict_2classes)
 
 # Assuming 'label' is the column name for the labels in the DataFrame `synth_data`
-unique_labels = synth_data['label'].nunique()
+unique_labels = full_data['label'].nunique()
 
 # Print the number of unique labels
 print(f"There are {unique_labels} unique labels in the dataset.")
 
-class_counts = synth_data['label'].value_counts()
+class_counts = full_data['label'].value_counts()
 print(class_counts)
 
 # Display the first few entries to verify the changes
-print(synth_data.head())
+print(full_data)
+
+# prep the data to be inputted into model
+data = full_data
 
 #########################################################
-#    Analyzing the Real Data   #
+#    Clustering of Minority Class Data    #
 #########################################################
+# Assuming 'Attack' is the minority class; adjust as per your dataset analysis
+minority_class_data = full_data.loc[full_data['label'] == 'Benign'].copy()
+print(minority_class_data)
+
+# Ensure all data for clustering is numeric
+clustering_features = [col for col in num_cols if col in minority_class_data.columns]  # Ensure these are only numeric
+
+# KMeans Clustering
+algorithm = cluster.KMeans
+args, kwds = (), {'n_clusters': 2, 'random_state': 0}
+labels = algorithm(*args, **kwds).fit_predict(minority_class_data[clustering_features])
+
+# Creating a new DataFrame to see how many items are in each cluster
+cluster_counts = pd.DataFrame([[np.sum(labels == i)] for i in np.unique(labels)], columns=['count'], index=np.unique(labels))
+print("Cluster counts in the minority class:")
+print(cluster_counts)
+
+# Optionally, assign these cluster labels back to the main data set to form new classes or insights
+minority_class_data['label'] = labels
+print(minority_class_data)
+
+# Merging this back to the full dataset if needed
+full_data.loc[full_data['label'] == 'Benign', 'Cluster'] = labels
+
+label_encoder = LabelEncoder()
+# full_data['label', 'Cluster'] = label_encoder.fit_transform(full_data['label', 'Cluster'])
+minority_class_data['label'] = label_encoder.fit_transform(minority_class_data['label'])
+
+# Impute NaN values in 'label' and 'Cluster' with the mode (most frequent value)
+# for column in ['label', 'Cluster']:
+#     mode_value = full_data[column].mode()[0]
+#     full_data[column].fillna(mode_value, inplace=True)
+#
+# print(full_data[['label', 'Cluster']].isna().sum())
+
+for column in ['label']:
+    mode_value = minority_class_data[column].mode()[0]
+    minority_class_data[column].fillna(mode_value, inplace=True)
+
+print(minority_class_data['label'].isna().sum())
+
 # Assuming 'label' is the column name for the labels in the DataFrame `synth_data`
-unique_labels_real = data['label'].nunique()
+unique_labels = minority_class_data['label'].nunique()
 
 # Print the number of unique labels
-print(f"There are {unique_labels_real} unique labels in the dataset.")
+print(f"There are {unique_labels} unique labels in the dataset.")
 
-class_counts = data['label'].value_counts()
+class_counts = minority_class_data['label'].value_counts()
 print(class_counts)
 
-# Display the first few entries to verify the changes
-print(synth_data.head())
-#########################################################
-#    Loading Synthetic Data as Training data  #
-#########################################################
-# Assuming your synthetic data is correctly labeled and structured similar to real data
-X_synthetic = synth_data.drop('label', axis=1)  # Synthetic Features
-y_synthetic = synth_data['label']               # Synthetic Labels
+# Continue with your analysis or synthesis
+print(minority_class_data.head())
 
 #########################################################
-#    Filtering Real Data to Match Synthetic Data Labels  #
+#    Defining Training Parameters and Training Model    #
 #########################################################
-# Extract unique labels from the synthetic data
-synthetic_labels = set(synth_data['label'].unique())
-print(f"Unique labels in the synthetic dataset: {synthetic_labels}")
 
-# Filter the real data to only include labels that are present in the synthetic dataset
-filtered_real_data = full_data[full_data['label'].isin(synthetic_labels)]
-filtered_real_data_labels = set(filtered_real_data['label'].unique())
-print(f"Filtered labels in the real dataset: {filtered_real_data_labels}")
+#Define the Conditional GAN and training parameters
+noise_dim = 46
+dim = 46
+batch_size = 500
+beta_1 = 0.5
+beta_2 = 0.9
 
-# Optionally, balance or sample the real data to ensure the model is tested evenly across classes
-# Here, we sample a fixed number (e.g., 10000 instances), but you can also use other sampling strategies.
-sampled_real_data = filtered_real_data.sample(min(100000, len(filtered_real_data)), random_state=42)
+log_step = 100
+epochs = 5 + 1
+learning_rate = 5e-4
+models_dir = '../cache'
 
-print("Filtered and sampled real data statistics:")
-print(sampled_real_data['label'].value_counts())
+#Test here the new inputs
+gan_args = ModelParameters(batch_size=batch_size,
+                           lr=learning_rate,
+                           betas=(beta_1, beta_2),
+                           noise_dim=noise_dim,
+                           layers_dim=dim)
+
+train_args = TrainParameters(epochs=epochs,
+                             cache_prefix='cgan_cyberAttack',
+                             sample_interval=log_step,
+                             label_dim=-1,
+                             labels=(0, 1))
+
+# create a bining (WHY)
+# minority_class_data[''] = pd.cut(minority_class_data[''], 5).cat.codes
+
+# Init the Conditional GAN providing the index of the label column as one of the arguments
+synth = RegularSynthesizer(modelname='cwgangp', model_parameters=gan_args)
+
+# Training the Conditional GAN
+synth.fit(data=minority_class_data, label_cols=['label'], train_arguments=train_args, num_cols=num_cols, cat_cols=cat_cols)
+
+# Saving the synthesizer
+synth.save('cyberattack_cwgangp_model.pkl')
+
 
 #########################################################
-#    Loading Real Data as Testing data  #
+#    Loading and sampling from a trained synthesizer    #
 #########################################################
-X_real = sampled_real_data.drop('label', axis=1)  # Features
-y_real = sampled_real_data['label']               # Labels
 
-#########################################################
-#    Setting up Random Forest Classifier Model  #
-#########################################################
-from sklearn.ensemble import RandomForestClassifier
+synth = RegularSynthesizer.load('cyberattack_cwgangp_model.pkl')
 
-# Initialize the Random Forest classifier
-rf_classifier = RandomForestClassifier(n_estimators=100, random_state=42)
+# Optional Condition array
+cond_array = pd.DataFrame(2000*[0, 1], columns=['label'])  # for cgans
 
-#########################################################
-#    Training  Random Forest Classifier Model  #
-#########################################################
-# Train the model using the synthetic data
-rf_classifier.fit(X_synthetic, y_synthetic)
+# Generating synthetic samples
+synth_data = synth.sample(cond_array)  # for cgans
 
-#########################################################
-#    Testing  Random Forest Classifier Model  #
-#########################################################
-# Use the real testing data set
-y_pred = rf_classifier.predict(X_real)
-#########################################################
-# Analyze Test Results  Random Forest Classifier Model  #
-#########################################################
-from sklearn.metrics import classification_report, accuracy_score
+# synth_data = synth.sample(100000)  # for non cgans
 
-# Calculating accuracy
-accuracy = accuracy_score(y_real, y_pred)
-print(f"Accuracy of the model: {accuracy:.2%}")
+print(synth_data)
 
-# Detailed classification report
-print("Classification Report:")
-print(classification_report(y_real, y_pred))
+# Assuming 'label' is the column name for the labels in the DataFrame `synth_data`
+unique_labels = sample['label'].nunique()
 
-# Confusion Matrix
-conf_matrix = confusion_matrix(y_real, y_pred)
-print("Confusion Matrix:")
-print(conf_matrix)
+# Print the number of unique labels
+print(f"There are {unique_labels} unique labels in the dataset.")
 
-# Get unique labels
-labels = sorted(y_real.unique())
+class_counts = sample['label'].value_counts()
+print(class_counts)
 
-fig, ax = plt.subplots(figsize=(10, 7))  # Adjust the figure size as needed
-cax = ax.matshow(conf_matrix, cmap=plt.cm.Blues)  # Apply a color map
-fig.colorbar(cax)  # Add a color bar
+# Save the synthetic data to a CSV file
+sample.to_csv('synthetic_data.csv', index=False)
 
-# Set axis labels with rotation for x-axis labels
-ax.set_xticks(np.arange(len(labels)))
-ax.set_xticklabels(labels, rotation=45, ha="left")  # Rotate x-axis labels for better visibility
-ax.set_yticks(np.arange(len(labels)))
-ax.set_yticklabels(labels)
-
-# Adjust the margins and layout
-plt.gcf().subplots_adjust(bottom=0.15)  # Increase bottom margin
-
-# Ensure every label is displayed and add grid lines for better readability
-ax.set_xticks(np.arange(conf_matrix.shape[1]+1)-.5, minor=True)
-ax.set_yticks(np.arange(conf_matrix.shape[0]+1)-.5, minor=True)
-ax.grid(which="minor", color="gray", linestyle='-', linewidth=0.5)
-ax.tick_params(which="minor", size=0)  # Remove minor tick marks
-
-# Setting labels and title
-ax.set_xlabel('Predicted labels')
-ax.set_ylabel('True labels')
-ax.set_title('Confusion Matrix')
-
-# Add text annotations inside the heatmap squares
-for (i, j), val in np.ndenumerate(conf_matrix):
-    ax.text(j, i, f'{val}', ha='center', va='center', color='red')
-
-plt.show()

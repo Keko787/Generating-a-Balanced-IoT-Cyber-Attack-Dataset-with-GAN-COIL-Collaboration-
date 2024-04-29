@@ -40,7 +40,7 @@ import time
 from ydata_synthetic.synthesizers.regular import RegularSynthesizer
 from ydata_synthetic.synthesizers import ModelParameters, TrainParameters
 
-
+import sklearn.cluster as cluster
 from sklearn.model_selection import cross_val_score
 from sklearn.model_selection import cross_val_predict
 from sklearn.model_selection import KFold
@@ -91,7 +91,7 @@ num_cols = [
        'Max', 'AVG', 'Std', 'Tot size', 'IAT', 'Number', 'Magnitue',
        'Radius', 'Covariance', 'Variance', 'Weight',
 ]
-cat_cols = ['label']
+cat_cols = []
 
 # feature scaling
 scaler = StandardScaler()
@@ -144,10 +144,10 @@ print(full_data[:2])
 print(full_data.shape)
 
 # Relabel the 'label' column using dict_7classes
-full_data['label'] = full_data['label'].map(dict_7classes)
+# full_data['label'] = full_data['label'].map(dict_7classes)
 
 # # Relabel the 'label' column using dict_2classes
-# full_data['label'] = full_data['label'].map(dict_2classes)
+full_data['label'] = full_data['label'].map(dict_2classes)
 
 # Assuming 'label' is the column name for the labels in the DataFrame `synth_data`
 unique_labels = full_data['label'].nunique()
@@ -159,26 +159,80 @@ class_counts = full_data['label'].value_counts()
 print(class_counts)
 
 # Display the first few entries to verify the changes
-print(full_data.head())
+print(full_data)
 
 # prep the data to be inputted into model
 data = full_data
 
 #########################################################
+#    Clustering of Minority Class Data    #
+#########################################################
+# Assuming 'Attack' is the minority class; adjust as per your dataset analysis
+minority_class_data = full_data.loc[full_data['label'] == 'Benign'].copy()
+print(minority_class_data)
+
+# Ensure all data for clustering is numeric
+clustering_features = [col for col in num_cols if col in minority_class_data.columns]  # Ensure these are only numeric
+
+# KMeans Clustering
+algorithm = cluster.KMeans
+args, kwds = (), {'n_clusters': 2, 'random_state': 0}
+labels = algorithm(*args, **kwds).fit_predict(minority_class_data[clustering_features])
+
+# Creating a new DataFrame to see how many items are in each cluster
+cluster_counts = pd.DataFrame([[np.sum(labels == i)] for i in np.unique(labels)], columns=['count'], index=np.unique(labels))
+print("Cluster counts in the minority class:")
+print(cluster_counts)
+
+# Optionally, assign these cluster labels back to the main data set to form new classes or insights
+minority_class_data['label'] = labels
+print(minority_class_data)
+
+# Merging this back to the full dataset if needed
+full_data.loc[full_data['label'] == 'Benign', 'Cluster'] = labels
+
+label_encoder = LabelEncoder()
+# full_data['label', 'Cluster'] = label_encoder.fit_transform(full_data['label', 'Cluster'])
+minority_class_data['label'] = label_encoder.fit_transform(minority_class_data['label'])
+
+# Impute NaN values in 'label' and 'Cluster' with the mode (most frequent value)
+# for column in ['label', 'Cluster']:
+#     mode_value = full_data[column].mode()[0]
+#     full_data[column].fillna(mode_value, inplace=True)
+#
+# print(full_data[['label', 'Cluster']].isna().sum())
+
+for column in ['label']:
+    mode_value = minority_class_data[column].mode()[0]
+    minority_class_data[column].fillna(mode_value, inplace=True)
+
+print(minority_class_data['label'].isna().sum())
+
+# Assuming 'label' is the column name for the labels in the DataFrame `synth_data`
+unique_labels = minority_class_data['label'].nunique()
+
+# Print the number of unique labels
+print(f"There are {unique_labels} unique labels in the dataset.")
+
+class_counts = minority_class_data['label'].value_counts()
+print(class_counts)
+
+# Continue with your analysis or synthesis
+print(minority_class_data.head())
+
+#########################################################
 #    Defining Training Parameters and Training Model    #
 #########################################################
-fraud_w_classes = train_data.copy()
-fraud_w_classes['Class'] = labels
 
-#Define the Conditional WGANGP and training parameters
-noise_dim = 32
-dim = 128
-batch_size = 64
+#Define the Conditional GAN and training parameters
+noise_dim = 46
+dim = 46
+batch_size = 500
 beta_1 = 0.5
 beta_2 = 0.9
 
 log_step = 100
-epochs = 500 + 1
+epochs = 5 + 1
 learning_rate = 5e-4
 models_dir = '../cache'
 
@@ -190,34 +244,49 @@ gan_args = ModelParameters(batch_size=batch_size,
                            layers_dim=dim)
 
 train_args = TrainParameters(epochs=epochs,
-                             cache_prefix='',
+                             cache_prefix='cgan_cyberAttack',
                              sample_interval=log_step,
                              label_dim=-1,
-                             labels=(0,1))
+                             labels=(0, 1))
 
-#create a bining
-fraud_w_classes['Amount'] = pd.cut(fraud_w_classes['Amount'], 5).cat.codes
+# create a bining (WHY)
+# minority_class_data[''] = pd.cut(minority_class_data[''], 5).cat.codes
 
-#Init the Conditional WGANGP providing the index of the label column as one of the arguments
-synth = RegularSynthesizer(modelname='cwgangp', model_parameters=gan_args, n_critic=5)
+# Init the Conditional GAN providing the index of the label column as one of the arguments
+synth = RegularSynthesizer(modelname='cwgangp', model_parameters=gan_args)
 
-#Fitting the synthesizer
-synth.fit(data=fraud_w_classes, label_cols=["Class"], train_arguments=train_args,
-                  num_cols=num_cols, cat_cols=cat_cols)
+# Training the Conditional GAN
+synth.fit(data=minority_class_data, label_cols=['label'], train_arguments=train_args, num_cols=num_cols, cat_cols=cat_cols)
 
-synth.save('cyberAttack_cwgangp_model.pkl')
+# Saving the synthesizer
+synth.save('cyberattack_cwgangp_model.pkl')
 
 
 #########################################################
 #    Loading and sampling from a trained synthesizer    #
 #########################################################
 
-# Loading model
-synth = RegularSynthesizer.load('attack_wgangp_model_3.pkl')
+synth = RegularSynthesizer.load('cyberattack_cwgangp_model.pkl')
+
+# Optional Condition array
+cond_array = pd.DataFrame(2000*[0, 1], columns=['label'])  # for cgans
 
 # Generating synthetic samples
-synth_data = synth.sample(1000)
+synth_data = synth.sample(cond_array)  # for cgans
+
+# synth_data = synth.sample(100000)  # for non cgans
+
 print(synth_data)
 
+# Assuming 'label' is the column name for the labels in the DataFrame `synth_data`
+unique_labels = sample['label'].nunique()
+
+# Print the number of unique labels
+print(f"There are {unique_labels} unique labels in the dataset.")
+
+class_counts = sample['label'].value_counts()
+print(class_counts)
+
 # Save the synthetic data to a CSV file
-synth_data.to_csv('synthetic_data.csv', index=False)
+sample.to_csv('synthetic_data.csv', index=False)
+

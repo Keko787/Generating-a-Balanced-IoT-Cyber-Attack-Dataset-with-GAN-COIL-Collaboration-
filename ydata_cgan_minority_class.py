@@ -258,14 +258,17 @@ synth.save('cyberattack_cgan_model.pkl')
 #    Loading and sampling from a trained synthesizer    #
 #########################################################
 
-# Loading model
-synth = RegularSynthesizer.load('cyberattack_cgan_model.pkl')
+synth = RegularSynthesizer.load('cyberattack_cwgangp_model.pkl')
 
-cond_array = pd.DataFrame(100*[1], columns=['label'])
+# Optional Condition array
+cond_array = pd.DataFrame(2000*[0, 1], columns=['label'])  # for cgans
 
 # Generating synthetic samples
-sample = synth.sample(cond_array)
-print(sample)
+synth_data = synth.sample(cond_array)  # for cgans
+
+# synth_data = synth.sample(100000)  # for non cgans
+
+print(synth_data)
 
 # Save the synthetic data to a CSV file
 sample.to_csv('synthetic_data.csv', index=False)
