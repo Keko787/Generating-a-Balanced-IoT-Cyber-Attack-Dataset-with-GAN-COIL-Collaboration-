@@ -69,13 +69,19 @@ print("TensorFlow version:", tf.__version__)
 synth = RegularSynthesizer.load('cyberattack_cwgangp_model.pkl')
 
 # Optional Condition array
-cond_array = pd.DataFrame({'label': 2000*[0] + 2000*[1]})  # for cgans
+cond_array = pd.DataFrame({'label': 200000*[0] + 2000*[1]})  # for cgans
 
 # Generating synthetic samples
 synth_data = synth.sample(cond_array)  # for cgans
 
 # synth_data = synth.sample(100000)  # for non cgans
 
+print(synth_data)
+
+label_mapping = {0: 'Attack', 1: 'Benign'}
+
+# Apply mapping to decode
+synth_data['label'] = synth_data['label'].map(label_mapping)
 print(synth_data)
 #########################################################
 #    Loading Real Data   #
@@ -164,7 +170,7 @@ print(full_data.shape)
 # full_data['label'] = full_data['label'].map(dict_7classes)
 
 # # Relabel the 'label' column using dict_2classes
-# full_data['label'] = full_data['label'].map(dict_2classes)
+full_data['label'] = full_data['label'].map(dict_2classes)
 
 # prep the data to be inputted into model
 data = full_data
@@ -176,7 +182,7 @@ data = full_data
 unique_labels = synth_data['label'].nunique()
 
 # Print the number of unique labels
-print(f"There are {unique_labels} unique labels in the dataset.")
+print(f"There are {unique_labels} unique labels in the Synthetic dataset.")
 
 class_counts = synth_data['label'].value_counts()
 print(class_counts)
