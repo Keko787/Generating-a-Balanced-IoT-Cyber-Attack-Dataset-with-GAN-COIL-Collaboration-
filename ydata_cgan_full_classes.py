@@ -165,15 +165,22 @@ print(full_data.head())
 data = full_data
 
 #########################################################
-#    Clustering of Minority Class Data    #
+#    Preprocessing / Clustering of Class Data    #
 #########################################################
 # Assuming 'Attack' is the minority class; adjust as per your dataset analysis
 minority_class_data = full_data.loc[full_data['label'] == 'Benign'].copy()
 
+label_encoder = LabelEncoder()
+full_data['label'] = label_encoder.fit_transform(full_data['label'])
+
+# If 'Cluster' column has been created and needs encoding
+if 'Cluster' in full_data.columns:
+    full_data['Cluster'] = label_encoder.fit_transform(full_data['Cluster'])
+
 # Ensure all data for clustering is numeric
 clustering_features = [col for col in num_cols if col in minority_class_data.columns]  # Ensure these are only numeric
 
-# KMeans Clustering
+# --- KMeans Clustering ---
 algorithm = cluster.KMeans
 args, kwds = (), {'n_clusters': 2, 'random_state': 0}
 labels = algorithm(*args, **kwds).fit_predict(minority_class_data[clustering_features])
@@ -183,22 +190,8 @@ cluster_counts = pd.DataFrame([[np.sum(labels == i)] for i in np.unique(labels)]
 print("Cluster counts in the minority class:")
 print(cluster_counts)
 
-# Optionally, assign these cluster labels back to the main data set to form new classes or insights
-# minority_class_data['label'] = labels
-
 # Merging this back to the full dataset if needed
 full_data.loc[full_data['label'] == 'Benign', 'Cluster'] = labels
-
-label_encoder = LabelEncoder()
-# Encode 'label' column
-full_data['label'] = label_encoder.fit_transform(full_data['label'])
-
-# If 'Cluster' column has been created and needs encoding
-if 'Cluster' in full_data.columns:
-    full_data['Cluster'] = label_encoder.fit_transform(full_data['Cluster'])
-
-# Optionally, use the minority class data only
-# minority_class_data['label'] = label_encoder.fit_transform(minority_class_data['label'])
 
 # Impute NaN values in 'label' and 'Cluster' with the mode (most frequent value)
 for column in ['label', 'Cluster']:
@@ -207,14 +200,6 @@ for column in ['label', 'Cluster']:
 
 print(full_data[['label', 'Cluster']].isna().sum())
 
-# Optionally, use the minority class data only
-# for column in ['label']:
-#     mode_value = minority_class_data[column].mode()[0]
-#     minority_class_data[column].fillna(mode_value, inplace=True)
-#
-# print(minority_class_data['label'].isna().sum())
-
-# Continue with your analysis or synthesis
 # Display some entries to verify the changes
 print(full_data[['label', 'Cluster']].head())
 
@@ -235,9 +220,6 @@ log_step = 100
 epochs = 1 + 1
 learning_rate = 5e-4
 models_dir = '../cache'
-
-
-
 
 #Test here the new inputs
 gan_args = ModelParameters(batch_size=batch_size,
@@ -262,14 +244,13 @@ synth = RegularSynthesizer(modelname='cgan', model_parameters=gan_args)
 synth.fit(data=full_data, label_cols=['label'], train_arguments=train_args, num_cols=num_cols, cat_cols=cat_cols)
 
 #Saving the synthesizer
-synth.save('cyberattack_cgan_model_2.pkl')
-
+synth.save('cyberattack_cgan_model_full.pkl')
 
 #########################################################
 #    Loading and sampling from a trained synthesizer    #
 #########################################################
 
-synth = RegularSynthesizer.load('cyberattack_cwgangp_model.pkl')
+synth = RegularSynthesizer.load('cyberattack_cgan_model_full.pkl')
 
 # Optional Condition array
 cond_array = pd.DataFrame(2000*[0, 1], columns=['label'])  # for cgans
@@ -282,4 +263,4 @@ synth_data = synth.sample(cond_array)  # for cgans
 print(synth_data)
 
 # Save the synthetic data to a CSV file
-sample.to_csv('synthetic_data.csv', index=False)
+synth_data.to_csv('synthetic_data.csv', index=False)

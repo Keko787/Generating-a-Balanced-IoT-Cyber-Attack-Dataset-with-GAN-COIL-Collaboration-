@@ -165,16 +165,22 @@ print(full_data)
 data = full_data
 
 #########################################################
-#    Clustering of Minority Class Data    #
+#    Preprocessing / Clustering of Class Data    #
 #########################################################
 # Assuming 'Attack' is the minority class; adjust as per your dataset analysis
 minority_class_data = full_data.loc[full_data['label'] == 'Benign'].copy()
-print(minority_class_data)
+
+label_encoder = LabelEncoder()
+full_data['label'] = label_encoder.fit_transform(full_data['label'])
+
+# If 'Cluster' column has been created and needs encoding
+if 'Cluster' in full_data.columns:
+    full_data['Cluster'] = label_encoder.fit_transform(full_data['Cluster'])
 
 # Ensure all data for clustering is numeric
 clustering_features = [col for col in num_cols if col in minority_class_data.columns]  # Ensure these are only numeric
 
-# KMeans Clustering
+# --- KMeans Clustering ---
 algorithm = cluster.KMeans
 args, kwds = (), {'n_clusters': 2, 'random_state': 0}
 labels = algorithm(*args, **kwds).fit_predict(minority_class_data[clustering_features])
@@ -184,41 +190,20 @@ cluster_counts = pd.DataFrame([[np.sum(labels == i)] for i in np.unique(labels)]
 print("Cluster counts in the minority class:")
 print(cluster_counts)
 
-# Optionally, assign these cluster labels back to the main data set to form new classes or insights
-minority_class_data['label'] = labels
-print(minority_class_data)
-
 # Merging this back to the full dataset if needed
 full_data.loc[full_data['label'] == 'Benign', 'Cluster'] = labels
 
-label_encoder = LabelEncoder()
-# full_data['label', 'Cluster'] = label_encoder.fit_transform(full_data['label', 'Cluster'])
-minority_class_data['label'] = label_encoder.fit_transform(minority_class_data['label'])
-
 # Impute NaN values in 'label' and 'Cluster' with the mode (most frequent value)
-# for column in ['label', 'Cluster']:
-#     mode_value = full_data[column].mode()[0]
-#     full_data[column].fillna(mode_value, inplace=True)
-#
-# print(full_data[['label', 'Cluster']].isna().sum())
+for column in ['label', 'Cluster']:
+    mode_value = full_data[column].mode()[0]
+    full_data[column].fillna(mode_value, inplace=True)
 
-for column in ['label']:
-    mode_value = minority_class_data[column].mode()[0]
-    minority_class_data[column].fillna(mode_value, inplace=True)
+print(full_data[['label', 'Cluster']].isna().sum())
 
-print(minority_class_data['label'].isna().sum())
+# Display some entries to verify the changes
+print(full_data[['label', 'Cluster']].head())
 
-# Assuming 'label' is the column name for the labels in the DataFrame `synth_data`
-unique_labels = minority_class_data['label'].nunique()
-
-# Print the number of unique labels
-print(f"There are {unique_labels} unique labels in the dataset.")
-
-class_counts = minority_class_data['label'].value_counts()
-print(class_counts)
-
-# Continue with your analysis or synthesis
-print(minority_class_data.head())
+print(full_data.head())
 
 #########################################################
 #    Defining Training Parameters and Training Model    #
@@ -279,14 +264,14 @@ synth_data = synth.sample(cond_array)  # for cgans
 print(synth_data)
 
 # Assuming 'label' is the column name for the labels in the DataFrame `synth_data`
-unique_labels = sample['label'].nunique()
+unique_labels = synth_data['label'].nunique()
 
 # Print the number of unique labels
 print(f"There are {unique_labels} unique labels in the dataset.")
 
-class_counts = sample['label'].value_counts()
+class_counts = synth_data['label'].value_counts()
 print(class_counts)
 
 # Save the synthetic data to a CSV file
-sample.to_csv('synthetic_data.csv', index=False)
+synth_data.to_csv('synthetic_data.csv', index=False)
 

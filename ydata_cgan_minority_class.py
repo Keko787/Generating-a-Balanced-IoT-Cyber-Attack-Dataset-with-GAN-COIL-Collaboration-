@@ -169,45 +169,52 @@ data = full_data
 #########################################################
 # Assuming 'Attack' is the minority class; adjust as per your dataset analysis
 minority_class_data = full_data.loc[full_data['label'] == 'Benign'].copy()
+# Assuming 'label' is the column name for the labels in the DataFrame `synth_data`
+unique_labels = minority_class_data['label'].nunique()
+
+# Print the number of unique labels
+print(f"There are {unique_labels} unique labels in the dataset.")
+print(minority_class_data.iloc[10])
+
+label_encoder = LabelEncoder()
+minority_class_data['label'] = label_encoder.fit_transform(minority_class_data['label'])
+print(minority_class_data.iloc[10])
 
 # Ensure all data for clustering is numeric
 clustering_features = [col for col in num_cols if col in minority_class_data.columns]  # Ensure these are only numeric
 
-# KMeans Clustering
-algorithm = cluster.KMeans
-args, kwds = (), {'n_clusters': 2, 'random_state': 0}
-labels = algorithm(*args, **kwds).fit_predict(minority_class_data[clustering_features])
-
-# Creating a new DataFrame to see how many items are in each cluster
-cluster_counts = pd.DataFrame([[np.sum(labels == i)] for i in np.unique(labels)], columns=['count'], index=np.unique(labels))
-print("Cluster counts in the minority class:")
-print(cluster_counts)
-
-# Optionally, assign these cluster labels back to the main data set to form new classes or insights
-minority_class_data['label'] = labels
-
-# Merging this back to the full dataset if needed
-# full_data.loc[full_data['label'] == 'Benign', 'Cluster'] = labels
-
-label_encoder = LabelEncoder()
-# full_data['label', 'Cluster'] = label_encoder.fit_transform(full_data['label', 'Cluster'])
-minority_class_data['label'] = label_encoder.fit_transform(minority_class_data['label'])
-
-# Impute NaN values in 'label' and 'Cluster' with the mode (most frequent value)
-# for column in ['label', 'Cluster']:
-#     mode_value = full_data[column].mode()[0]
-#     full_data[column].fillna(mode_value, inplace=True)
+# # --- KMeans Clustering ---
+# algorithm = cluster.KMeans
+# args, kwds = (), {'n_clusters': 2, 'random_state': 0}
+# labels = algorithm(*args, **kwds).fit_predict(minority_class_data[clustering_features])
 #
-# print(full_data[['label', 'Cluster']].isna().sum())
+# # Creating a new DataFrame to see how many items are in each cluster
+# cluster_counts = pd.DataFrame([[np.sum(labels == i)] for i in np.unique(labels)], columns=['count'], index=np.unique(labels))
+# print("Cluster counts in the minority class:")
+# print(cluster_counts)
+#
+# #assign these cluster labels back to the main data set to form new classes or insights
+# minority_class_data['label'] = labels
+# print(minority_class_data)
 
+# Handling empty instances
 for column in ['label']:
     mode_value = minority_class_data[column].mode()[0]
     minority_class_data[column].fillna(mode_value, inplace=True)
 
 print(minority_class_data['label'].isna().sum())
 
+# Assuming 'label' is the column name for the labels in the DataFrame `synth_data`
+unique_labels = minority_class_data['label'].nunique()
+
+# Print the number of unique labels
+print(f"There are {unique_labels} unique labels in the dataset.")
+
+class_counts = minority_class_data['label'].value_counts()
+print(class_counts)
+
 # Continue with your analysis or synthesis
-print(full_data.head())
+print(minority_class_data.head())
 
 #########################################################
 #    Defining Training Parameters and Training Model    #
@@ -224,9 +231,6 @@ log_step = 100
 epochs = 1 + 1
 learning_rate = 5e-4
 models_dir = '../cache'
-
-
-
 
 #Test here the new inputs
 gan_args = ModelParameters(batch_size=batch_size,
@@ -251,14 +255,13 @@ synth = RegularSynthesizer(modelname='cgan', model_parameters=gan_args)
 synth.fit(data=minority_class_data, label_cols=['label'], train_arguments=train_args, num_cols=num_cols, cat_cols=cat_cols)
 
 #Saving the synthesizer
-synth.save('cyberattack_cgan_model.pkl')
-
+synth.save('cyberattack_cgan_model_minority.pkl')
 
 #########################################################
 #    Loading and sampling from a trained synthesizer    #
 #########################################################
 
-synth = RegularSynthesizer.load('cyberattack_cwgangp_model.pkl')
+synth = RegularSynthesizer.load('cyberattack_cgan_model_minority.pkl')
 
 # Optional Condition array
 cond_array = pd.DataFrame(2000*[0, 1], columns=['label'])  # for cgans
@@ -266,10 +269,8 @@ cond_array = pd.DataFrame(2000*[0, 1], columns=['label'])  # for cgans
 # Generating synthetic samples
 synth_data = synth.sample(cond_array)  # for cgans
 
-# synth_data = synth.sample(100000)  # for non cgans
-
 print(synth_data)
 
 # Save the synthetic data to a CSV file
-sample.to_csv('synthetic_data.csv', index=False)
+synth_data.to_csv('synthetic_data.csv', index=False)
 

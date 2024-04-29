@@ -69,7 +69,7 @@ print("TensorFlow version:", tf.__version__)
 synth = RegularSynthesizer.load('cyberattack_cwgangp_model.pkl')
 
 # Optional Condition array
-cond_array = pd.DataFrame(2000*[0, 1], columns=['label'])  # for cgans
+cond_array = pd.DataFrame({'label': 2000*[0] + 2000*[1]})  # for cgans
 
 # Generating synthetic samples
 synth_data = synth.sample(cond_array)  # for cgans
