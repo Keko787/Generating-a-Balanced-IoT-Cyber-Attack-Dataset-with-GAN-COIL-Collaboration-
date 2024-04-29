@@ -184,20 +184,27 @@ print("Cluster counts in the minority class:")
 print(cluster_counts)
 
 # Optionally, assign these cluster labels back to the main data set to form new classes or insights
-# minority_class_data['label'] = labels
+minority_class_data['label'] = labels
 
 # Merging this back to the full dataset if needed
-full_data.loc[full_data['label'] == 'Benign', 'Cluster'] = labels
+# full_data.loc[full_data['label'] == 'Benign', 'Cluster'] = labels
 
 label_encoder = LabelEncoder()
-full_data['label'] = label_encoder.fit_transform(full_data['label'])
+# full_data['label', 'Cluster'] = label_encoder.fit_transform(full_data['label', 'Cluster'])
+minority_class_data['label'] = label_encoder.fit_transform(minority_class_data['label'])
 
 # Impute NaN values in 'label' and 'Cluster' with the mode (most frequent value)
-for column in ['label', 'Cluster']:
-    mode_value = full_data[column].mode()[0]
-    full_data[column].fillna(mode_value, inplace=True)
+# for column in ['label', 'Cluster']:
+#     mode_value = full_data[column].mode()[0]
+#     full_data[column].fillna(mode_value, inplace=True)
+#
+# print(full_data[['label', 'Cluster']].isna().sum())
 
-print(full_data[['label', 'Cluster']].isna().sum())
+for column in ['label']:
+    mode_value = minority_class_data[column].mode()[0]
+    minority_class_data[column].fillna(mode_value, inplace=True)
+
+print(minority_class_data['label'].isna().sum())
 
 # Continue with your analysis or synthesis
 print(full_data.head())
@@ -208,7 +215,7 @@ print(full_data.head())
 
 #Define the Conditional GAN and training parameters
 noise_dim = 46
-dim = 47
+dim = 46
 batch_size = 500
 beta_1 = 0.5
 beta_2 = 0.9
@@ -217,6 +224,9 @@ log_step = 100
 epochs = 1 + 1
 learning_rate = 5e-4
 models_dir = '../cache'
+
+
+
 
 #Test here the new inputs
 gan_args = ModelParameters(batch_size=batch_size,
@@ -238,7 +248,7 @@ train_args = TrainParameters(epochs=epochs,
 synth = RegularSynthesizer(modelname='cgan', model_parameters=gan_args)
 
 #Training the Conditional GAN
-synth.fit(data=full_data, label_cols=['label', 'Cluster'], train_arguments=train_args, num_cols=num_cols, cat_cols=cat_cols)
+synth.fit(data=minority_class_data, label_cols=['label'], train_arguments=train_args, num_cols=num_cols, cat_cols=cat_cols)
 
 #Saving the synthesizer
 synth.save('cyberattack_cgan_model.pkl')
@@ -251,9 +261,12 @@ synth.save('cyberattack_cgan_model.pkl')
 # Loading model
 synth = RegularSynthesizer.load('cyberattack_cgan_model.pkl')
 
+cond_array = pd.DataFrame(100*[1], columns=['label'])
+
 # Generating synthetic samples
-synth_data = synth.sample(1000)
-print(synth_data)
+sample = synth.sample(cond_array)
+print(sample)
 
 # Save the synthetic data to a CSV file
-synth_data.to_csv('synthetic_data.csv', index=False)
+sample.to_csv('synthetic_data.csv', index=False)
+
