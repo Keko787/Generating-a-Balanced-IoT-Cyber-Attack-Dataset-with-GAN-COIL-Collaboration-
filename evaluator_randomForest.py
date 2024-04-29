@@ -66,7 +66,7 @@ print("TensorFlow version:", tf.__version__)
 #########################################################
 #    Loading GAN Model and Generating Data   #
 #########################################################
-synth = RegularSynthesizer.load('attack_wgangp_model_BinaryTest.pkl')
+synth = RegularSynthesizer.load('attack_wgangp_model_2.pkl')
 
 # Generating synthetic samples
 synth_data = synth.sample(100000)
@@ -158,7 +158,7 @@ print(full_data.shape)
 # full_data['label'] = full_data['label'].map(dict_7classes)
 
 # # Relabel the 'label' column using dict_2classes
-full_data['label'] = full_data['label'].map(dict_2classes)
+# full_data['label'] = full_data['label'].map(dict_2classes)
 
 # prep the data to be inputted into model
 data = full_data
