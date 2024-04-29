@@ -271,6 +271,15 @@ synth_data = synth.sample(cond_array)  # for cgans
 
 print(synth_data)
 
+# find the amount of labels in the synth data
+unique_labels = synth_data['label'].nunique()
+
+# Print the number of unique labels
+print(f"There are {unique_labels} unique labels in the dataset.")
+
+class_counts = synth_data['label'].value_counts()
+print(class_counts)
+
 # Save the synthetic data to a CSV file
 synth_data.to_csv('synthetic_data.csv', index=False)
 

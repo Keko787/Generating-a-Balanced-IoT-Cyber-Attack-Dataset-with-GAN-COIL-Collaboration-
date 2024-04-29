@@ -255,14 +255,14 @@ synth = RegularSynthesizer(modelname='cwgangp', model_parameters=gan_args)
 synth.fit(data=minority_class_data, label_cols=['label'], train_arguments=train_args, num_cols=num_cols, cat_cols=cat_cols)
 
 # Saving the synthesizer
-synth.save('cyberattack_cwgangp_model.pkl')
+synth.save('cyberattack_cwgangp_model_minority.pkl')
 
 
 #########################################################
 #    Loading and sampling from a trained synthesizer    #
 #########################################################
 
-synth = RegularSynthesizer.load('cyberattack_cwgangp_model.pkl')
+synth = RegularSynthesizer.load('cyberattack_cwgangp_model_minority.pkl')
 
 # Optional Condition array
 cond_array = pd.DataFrame(2000*[0, 1], columns=['label'])  # for cgans
@@ -274,7 +274,7 @@ synth_data = synth.sample(cond_array)  # for cgans
 
 print(synth_data)
 
-# Assuming 'label' is the column name for the labels in the DataFrame `synth_data`
+# find the amount of labels in the synth data
 unique_labels = synth_data['label'].nunique()
 
 # Print the number of unique labels

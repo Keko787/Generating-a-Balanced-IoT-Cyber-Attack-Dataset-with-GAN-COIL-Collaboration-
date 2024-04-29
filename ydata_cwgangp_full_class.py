@@ -170,38 +170,54 @@ data = full_data
 # Assuming 'Attack' is the minority class; adjust as per your dataset analysis
 minority_class_data = full_data.loc[full_data['label'] == 'Benign'].copy()
 
+print(full_data[full_data['label'] == 'Attack'].iloc[0])
+print(full_data[full_data['label'] == 'Benign'].iloc[0])
+
 label_encoder = LabelEncoder()
 full_data['label'] = label_encoder.fit_transform(full_data['label'])
 
-# If 'Cluster' column has been created and needs encoding
-if 'Cluster' in full_data.columns:
-    full_data['Cluster'] = label_encoder.fit_transform(full_data['Cluster'])
+# Store label mappings
+label_mapping = {index: label for index, label in enumerate(label_encoder.classes_)}
+print("Label mappings:", label_mapping)
 
-# Ensure all data for clustering is numeric
-clustering_features = [col for col in num_cols if col in minority_class_data.columns]  # Ensure these are only numeric
+# Retrieve the numeric codes for 'Attack' and 'Benign'
+attack_code = label_encoder.transform(['Attack'])[0]
+benign_code = label_encoder.transform(['Benign'])[0]
 
-# --- KMeans Clustering ---
-algorithm = cluster.KMeans
-args, kwds = (), {'n_clusters': 2, 'random_state': 0}
-labels = algorithm(*args, **kwds).fit_predict(minority_class_data[clustering_features])
+# Print specific instances after label encoding
+print("After encoding:")
+print(full_data[full_data['label'] == attack_code].iloc[0])
+print(full_data[full_data['label'] == benign_code].iloc[0])
 
-# Creating a new DataFrame to see how many items are in each cluster
-cluster_counts = pd.DataFrame([[np.sum(labels == i)] for i in np.unique(labels)], columns=['count'], index=np.unique(labels))
-print("Cluster counts in the minority class:")
-print(cluster_counts)
-
-# Merging this back to the full dataset if needed
-full_data.loc[full_data['label'] == 'Benign', 'Cluster'] = labels
-
-# Impute NaN values in 'label' and 'Cluster' with the mode (most frequent value)
-for column in ['label', 'Cluster']:
-    mode_value = full_data[column].mode()[0]
-    full_data[column].fillna(mode_value, inplace=True)
-
-print(full_data[['label', 'Cluster']].isna().sum())
-
-# Display some entries to verify the changes
-print(full_data[['label', 'Cluster']].head())
+# # Ensure all data for clustering is numeric
+# clustering_features = [col for col in num_cols if col in minority_class_data.columns]  # Ensure these are only numeric
+#
+# # --- KMeans Clustering ---
+# algorithm = cluster.KMeans
+# args, kwds = (), {'n_clusters': 2, 'random_state': 0}
+# labels = algorithm(*args, **kwds).fit_predict(minority_class_data[clustering_features])
+#
+# # Creating a new DataFrame to see how many items are in each cluster
+# cluster_counts = pd.DataFrame([[np.sum(labels == i)] for i in np.unique(labels)], columns=['count'], index=np.unique(labels))
+# print("Cluster counts in the minority class:")
+# print(cluster_counts)
+#
+# # Merging this back to the full dataset if needed
+# full_data.loc[full_data['label'] == 'Benign', 'Cluster'] = labels
+#
+# # If 'Cluster' column has been created and needs encoding
+# if 'Cluster' in full_data.columns:
+#     full_data['Cluster'] = label_encoder.fit_transform(full_data['Cluster'])
+#
+# # Impute NaN values in 'label' and 'Cluster' with the mode (most frequent value)
+# for column in ['label', 'Cluster']:
+#     mode_value = full_data[column].mode()[0]
+#     full_data[column].fillna(mode_value, inplace=True)
+#
+# print(full_data[['label', 'Cluster']].isna().sum())
+#
+# # Display some entries to verify the changes
+# print(full_data[['label', 'Cluster']].head())
 
 print(full_data.head())
 
@@ -241,17 +257,17 @@ train_args = TrainParameters(epochs=epochs,
 synth = RegularSynthesizer(modelname='cwgangp', model_parameters=gan_args)
 
 # Training the Conditional GAN
-synth.fit(data=minority_class_data, label_cols=['label'], train_arguments=train_args, num_cols=num_cols, cat_cols=cat_cols)
+synth.fit(data=full_data, label_cols=['label'], train_arguments=train_args, num_cols=num_cols, cat_cols=cat_cols)
 
 # Saving the synthesizer
-synth.save('cyberattack_cwgangp_model.pkl')
+synth.save('cyberattack_cwgangp_model_full.pkl')
 
 
 #########################################################
 #    Loading and sampling from a trained synthesizer    #
 #########################################################
 
-synth = RegularSynthesizer.load('cyberattack_cwgangp_model.pkl')
+synth = RegularSynthesizer.load('cyberattack_cwgangp_model_full.pkl')
 
 # Optional Condition array
 cond_array = pd.DataFrame(2000*[0, 1], columns=['label'])  # for cgans
@@ -263,7 +279,7 @@ synth_data = synth.sample(cond_array)  # for cgans
 
 print(synth_data)
 
-# Assuming 'label' is the column name for the labels in the DataFrame `synth_data`
+# find the amount of labels in the synth data
 unique_labels = synth_data['label'].nunique()
 
 # Print the number of unique labels
