@@ -91,7 +91,7 @@ num_cols = [
        'Max', 'AVG', 'Std', 'Tot size', 'IAT', 'Number', 'Magnitue',
        'Radius', 'Covariance', 'Variance', 'Weight',
 ]
-cat_cols = ['Cluster']
+cat_cols = []
 
 # feature scaling
 scaler = StandardScaler()
@@ -147,7 +147,7 @@ print(full_data.shape)
 # full_data['label'] = full_data['label'].map(dict_7classes)
 
 # # Relabel the 'label' column using dict_2classes
-full_data['label'] = full_data['label'].map(dict_2classes)
+# full_data['label'] = full_data['label'].map(dict_2classes)
 
 # Assuming 'label' is the column name for the labels in the DataFrame `synth_data`
 unique_labels = full_data['label'].nunique()

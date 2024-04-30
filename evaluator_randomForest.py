@@ -66,10 +66,10 @@ print("TensorFlow version:", tf.__version__)
 #########################################################
 #    Loading GAN Model and Generating Data   #
 #########################################################
-synth = RegularSynthesizer.load('cyberattack_cwgangp_model.pkl')
+synth = RegularSynthesizer.load('cyberattack_cwgangp_model_full.pkl')
 
 # Optional Condition array
-cond_array = pd.DataFrame({'label': 200000*[0] + 2000*[1]})  # for cgans
+cond_array = pd.DataFrame({'label': 200000*[0] + 200000*[1]})  # for cgans
 
 # Generating synthetic samples
 synth_data = synth.sample(cond_array)  # for cgans
@@ -197,12 +197,13 @@ print(synth_data.head())
 unique_labels_real = data['label'].nunique()
 
 # Print the number of unique labels
-print(f"There are {unique_labels_real} unique labels in the dataset.")
+print(f"There are {unique_labels_real} unique labels in the Real dataset.")
 
 class_counts = data['label'].value_counts()
 print(class_counts)
 
 # Display the first few entries to verify the changes
+print("Synthetic dataset:")
 print(synth_data.head())
 #########################################################
 #    Loading Synthetic Data as Training data  #
