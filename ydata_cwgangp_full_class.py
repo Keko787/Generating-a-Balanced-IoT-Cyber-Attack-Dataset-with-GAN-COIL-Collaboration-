@@ -242,7 +242,7 @@ beta_1 = 0.5
 beta_2 = 0.9
 
 log_step = 100
-epochs = 5 + 1
+epochs = 10 + 1
 learning_rate = 5e-4
 models_dir = '../cache'
 
