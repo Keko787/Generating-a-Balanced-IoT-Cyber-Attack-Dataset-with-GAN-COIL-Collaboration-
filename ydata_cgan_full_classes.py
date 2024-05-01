@@ -227,6 +227,8 @@ print(full_data.head())
 #    Defining Training Parameters and Training Model    #
 #########################################################
 
+
+
 #Define the Conditional GAN and training parameters
 noise_dim = 46
 dim = 46
