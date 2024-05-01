@@ -231,6 +231,9 @@ print(full_data.head())
 #    Defining Training Parameters and Training Model    #
 #########################################################
 
+# Extracting numeric codes for the labels from the previously created class_codes dictionary
+labels_tuple = tuple(class_codes.values())
+
 #Define the Conditional GAN and training parameters
 noise_dim = 46
 dim = 46
@@ -254,8 +257,8 @@ train_args = TrainParameters(epochs=epochs,
                              cache_prefix='cgan_cyberAttack',
                              sample_interval=log_step,
                              label_dim=-1,
-                             labels=(0, 1))
-
+                             labels=labels_tuple
+                             )
 # create a bining (WHY)
 # minority_class_data[''] = pd.cut(minority_class_data[''], 5).cat.codes
 
