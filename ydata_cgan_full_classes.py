@@ -36,6 +36,8 @@ from tqdm import tqdm
 #from IPython.display import clear_output
 import os
 import time
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 from ydata_synthetic.synthesizers.regular import RegularSynthesizer
 from ydata_synthetic.synthesizers import ModelParameters, TrainParameters
@@ -81,17 +83,18 @@ csv_filepaths.sort()
 data_sets = csv_filepaths
 
 num_cols = [
-    'flow_duration', 'Header_Length', 'Protocol Type', 'Duration',
-       'Rate', 'Srate', 'Drate', 'fin_flag_number', 'syn_flag_number',
-       'rst_flag_number', 'psh_flag_number', 'ack_flag_number',
-       'ece_flag_number', 'cwr_flag_number', 'ack_count',
-       'syn_count', 'fin_count', 'urg_count', 'rst_count',
-    'HTTP', 'HTTPS', 'DNS', 'Telnet', 'SMTP', 'SSH', 'IRC', 'TCP',
-       'UDP', 'DHCP', 'ARP', 'ICMP', 'IPv', 'LLC', 'Tot sum', 'Min',
-       'Max', 'AVG', 'Std', 'Tot size', 'IAT', 'Number', 'Magnitue',
-       'Radius', 'Covariance', 'Variance', 'Weight',
+    'flow_duration', 'Header_Length',  'Duration',
+    'Rate', 'Srate', 'ack_count', 'syn_count',
+    'fin_count', 'urg_count', 'rst_count', 'Tot sum',
+    'Min', 'Max', 'AVG', 'Std', 'Tot size', 'IAT', 'Number',
+    'Magnitue', 'Radius', 'Covariance', 'Variance', 'Weight',]
+cat_cols = [
+    'Protocol Type', 'Drate','fin_flag_number', 'syn_flag_number', 'rst_flag_number',
+    'psh_flag_number', 'ack_flag_number', 'ece_flag_number',
+    'cwr_flag_number', 'HTTP', 'HTTPS', 'DNS', 'Telnet',
+    'SMTP', 'SSH', 'IRC', 'TCP', 'UDP', 'DHCP', 'ARP',
+    'ICMP', 'IPv', 'LLC',
 ]
-cat_cols = []
 
 # feature scaling
 scaler = StandardScaler()
@@ -132,6 +135,13 @@ for data_set in data_sets:
     df = pd.read_csv(data_path)
     full_data = pd.concat([full_data, df])
 
+# prints an instance of each class
+print("Before encoding:")
+unique_labels = full_data['label'].unique()
+for label in unique_labels:
+    print(f"First instance of {label}:")
+    print(full_data[full_data['label'] == label].iloc[0])
+
 # Shuffle data
 full_data = shuffle(full_data, random_state=1)
 
@@ -159,7 +169,7 @@ class_counts = full_data['label'].value_counts()
 print(class_counts)
 
 # Display the first few entries to verify the changes
-print(full_data.head())
+print(full_data)
 
 # prep the data to be inputted into model
 data = full_data
@@ -167,12 +177,10 @@ data = full_data
 #########################################################
 #    Preprocessing / Clustering of Class Data    #
 #########################################################
-# Assuming 'Attack' is the minority class; adjust as per your dataset analysis
-minority_class_data = full_data.loc[full_data['label'] == 'Benign'].copy()
 
-print(full_data[full_data['label'] == 'Attack'].iloc[0])
-print(full_data[full_data['label'] == 'Benign'].iloc[0])
 
+
+# encodes the label
 label_encoder = LabelEncoder()
 full_data['label'] = label_encoder.fit_transform(full_data['label'])
 
@@ -180,18 +188,18 @@ full_data['label'] = label_encoder.fit_transform(full_data['label'])
 label_mapping = {index: label for index, label in enumerate(label_encoder.classes_)}
 print("Label mappings:", label_mapping)
 
-# Retrieve the numeric codes for 'Attack' and 'Benign'
-attack_code = label_encoder.transform(['Attack'])[0]
-benign_code = label_encoder.transform(['Benign'])[0]
+# Retrieve the numeric codes for classes
+class_codes = {label: label_encoder.transform([label])[0] for label in label_encoder.classes_}
 
 # Print specific instances after label encoding
 print("After encoding:")
-print(full_data[full_data['label'] == attack_code].iloc[0])
-print(full_data[full_data['label'] == benign_code].iloc[0])
+for label, code in class_codes.items():
+    # Print the first instance of each class
+    print(f"First instance of {label} (code {code}):")
+    print(full_data[full_data['label'] == code].iloc[0])
 
-
-# Ensure all data for clustering is numeric
-clustering_features = [col for col in num_cols if col in minority_class_data.columns]  # Ensure these are only numeric
+# # Ensure all data for clustering is numeric
+# clustering_features = [col for col in num_cols if col in minority_class_data.columns]  # Ensure these are only numeric
 #
 # # --- KMeans Clustering ---
 # algorithm = cluster.KMeans
@@ -210,7 +218,6 @@ clustering_features = [col for col in num_cols if col in minority_class_data.col
 # if 'Cluster' in full_data.columns:
 #     full_data['Cluster'] = label_encoder.fit_transform(full_data['Cluster'])
 #
-#
 # # Impute NaN values in 'label' and 'Cluster' with the mode (most frequent value)
 # for column in ['label', 'Cluster']:
 #     mode_value = full_data[column].mode()[0]
@@ -227,7 +234,8 @@ print(full_data.head())
 #    Defining Training Parameters and Training Model    #
 #########################################################
 
-
+# Extracting numeric codes for the labels from the previously created class_codes dictionary
+labels_tuple = tuple(class_codes.values())
 
 #Define the Conditional GAN and training parameters
 noise_dim = 46
@@ -237,7 +245,7 @@ beta_1 = 0.5
 beta_2 = 0.9
 
 log_step = 100
-epochs = 1 + 1
+epochs = 250 + 1
 learning_rate = 5e-4
 models_dir = '../cache'
 
@@ -252,19 +260,20 @@ train_args = TrainParameters(epochs=epochs,
                              cache_prefix='cgan_cyberAttack',
                              sample_interval=log_step,
                              label_dim=-1,
-                             labels=(0, 1))
-
-#create a bining (WHY)
+                             labels=labels_tuple
+                             )
+# create a bining (WHY)
 # minority_class_data[''] = pd.cut(minority_class_data[''], 5).cat.codes
 
-#Init the Conditional GAN providing the index of the label column as one of the arguments
+# Init the Conditional GAN providing the index of the label column as one of the arguments
 synth = RegularSynthesizer(modelname='cgan', model_parameters=gan_args)
 
-#Training the Conditional GAN
+# Training the Conditional GAN
 synth.fit(data=full_data, label_cols=['label'], train_arguments=train_args, num_cols=num_cols, cat_cols=cat_cols)
 
-#Saving the synthesizer
+# Saving the synthesizer
 synth.save('cyberattack_cgan_model_full.pkl')
+
 
 #########################################################
 #    Loading and sampling from a trained synthesizer    #
@@ -272,15 +281,25 @@ synth.save('cyberattack_cgan_model_full.pkl')
 
 synth = RegularSynthesizer.load('cyberattack_cgan_model_full.pkl')
 
-# Optional Condition array
-cond_array = pd.DataFrame(2000*[0, 1], columns=['label'])  # for cgans
+samples_per_class = 1000  # Adjust this as needed
+
+# Create an array that contains the class code repeated for the number of samples per class
+conditions = []
+for code in class_codes.values():
+    conditions.extend([code] * samples_per_class)
+
+# Optionally shuffle the conditions to randomize the order
+# np.random.shuffle(conditions)
+
+# Create a DataFrame for these conditions
+cond_array = pd.DataFrame(conditions, columns=['label'])
 
 # Generating synthetic samples
-synth_data = synth.sample(cond_array)  # for cgans
+synth_data = synth.sample(cond_array)  # # This uses the condition array
 
 # synth_data = synth.sample(100000)  # for non cgans
 
-print(synth_data)
+print(synth_data.head(),"\n")
 
 # find the amount of labels in the synth data
 unique_labels = synth_data['label'].nunique()
@@ -289,7 +308,68 @@ unique_labels = synth_data['label'].nunique()
 print(f"There are {unique_labels} unique labels in the dataset.")
 
 class_counts = synth_data['label'].value_counts()
-print(class_counts)
+print(class_counts,"\n")
+
+for label, code in class_codes.items():
+    # Print the first instance of each class
+    print(f"First instance of {label} (code {code}):")
+    print(full_data[full_data['label'] == code].iloc[0])
 
 # Save the synthetic data to a CSV file
 synth_data.to_csv('synthetic_data.csv', index=False)
+
+code_to_class = {v: k for k, v in class_codes.items()}
+
+# Decode the synthetic data labels
+synth_data['label'] = synth_data['label'].map(code_to_class)
+
+# Decode labels in the real dataset using the LabelEncoder
+full_data['label'] = label_encoder.inverse_transform(full_data['label'])
+
+# Print some of the decoded data
+print(synth_data.head())
+
+# Assuming `full_data` is your original data and `synth_data` is the synthetic data
+
+def plot_class_distribution(data, title):
+    plt.figure(figsize=(10, 6))
+    ax = sns.countplot(x='label', data=data)
+    plt.title(title)
+    plt.ylabel('Count')
+    plt.xlabel('Class Label')
+    # Rotate labels to prevent overlap
+    plt.xticks(rotation=45, ha='right', fontsize=10)  # Adjust rotation and font size as needed
+    plt.tight_layout()  # Adjust layout to make room for label rotation
+    plt.show()
+
+def plot_feature_comparison(real_data, synth_data, feature1, feature2):
+    plt.figure(figsize=(12, 6))
+
+    # Plotting the real data
+    plt.subplot(1, 2, 1)
+    sns.scatterplot(x=feature1, y=feature2, data=real_data, alpha=0.5)
+    plt.title('Real Data')
+    plt.xlabel(feature1)  # Ensure the feature names are readable
+    plt.ylabel(feature2)
+    plt.xticks(rotation=45, ha='right', fontsize=10)  # Adjust rotation and font size as needed
+
+    # Plotting the synthetic data
+    plt.subplot(1, 2, 2)
+    sns.scatterplot(x=feature1, y=feature2, data=synth_data, alpha=0.5)
+    plt.title('Synthetic Data')
+    plt.xlabel(feature1)
+    plt.ylabel(feature2)
+    plt.xticks(rotation=45, ha='right', fontsize=10)  # Adjust rotation and font size as needed
+
+    plt.suptitle(f'Comparison of {feature1} vs {feature2}')
+    plt.tight_layout()  # Adjust layout to make room for label rotation
+    plt.show()
+
+
+# Plot class distribution for both real and synthetic data
+plot_class_distribution(full_data, 'Real Data Class Distribution')
+plot_class_distribution(synth_data, 'Synthetic Data Class Distribution')
+
+# Plot feature comparisons (adjust 'feature1' and 'feature2' to your dataset's features)
+plot_feature_comparison(full_data, synth_data, 'flow_duration', 'Duration')
+

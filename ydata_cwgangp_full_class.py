@@ -83,17 +83,17 @@ csv_filepaths.sort()
 data_sets = csv_filepaths
 
 num_cols = [
-    'flow_duration', 'Header_Length', 'Protocol Type', 'Duration',
-       'Rate', 'Srate', 'Drate', 'fin_flag_number', 'syn_flag_number',
-       'rst_flag_number', 'psh_flag_number', 'ack_flag_number',
-       'ece_flag_number', 'cwr_flag_number', 'ack_count',
-       'syn_count', 'fin_count', 'urg_count', 'rst_count',
-    'HTTP', 'HTTPS', 'DNS', 'Telnet', 'SMTP', 'SSH', 'IRC', 'TCP',
-       'UDP', 'DHCP', 'ARP', 'ICMP', 'IPv', 'LLC', 'Tot sum', 'Min',
-       'Max', 'AVG', 'Std', 'Tot size', 'IAT', 'Number', 'Magnitue',
-       'Radius', 'Covariance', 'Variance', 'Weight',
-]
-cat_cols = []
+    'flow_duration', 'Header_Length',  'Duration',
+    'Rate', 'Srate', 'ack_count', 'syn_count',
+    'fin_count', 'urg_count', 'rst_count', 'Tot sum',
+    'Min', 'Max', 'AVG', 'Std', 'Tot size', 'IAT', 'Number',
+    'Magnitue', 'Radius', 'Covariance', 'Variance', 'Weight',]
+cat_cols = [
+    'Protocol Type', 'Drate','fin_flag_number', 'syn_flag_number', 'rst_flag_number',
+    'psh_flag_number', 'ack_flag_number', 'ece_flag_number',
+    'cwr_flag_number', 'HTTP', 'HTTPS', 'DNS', 'Telnet',
+    'SMTP', 'SSH', 'IRC', 'TCP', 'UDP', 'DHCP', 'ARP',
+    'ICMP', 'IPv', 'LLC',]
 
 # feature scaling
 scaler = StandardScaler()
@@ -134,6 +134,13 @@ for data_set in data_sets:
     df = pd.read_csv(data_path)
     full_data = pd.concat([full_data, df])
 
+# prints an instance of each class
+print("Before encoding:")
+unique_labels = full_data['label'].unique()
+for label in unique_labels:
+    print(f"First instance of {label}:")
+    print(full_data[full_data['label'] == label].iloc[0])
+
 # Shuffle data
 full_data = shuffle(full_data, random_state=1)
 
@@ -170,12 +177,7 @@ data = full_data
 #    Preprocessing / Clustering of Class Data    #
 #########################################################
 
-# prints an instance of each class
-print("Before encoding:")
-unique_labels = full_data['label'].unique()
-for label in unique_labels:
-    print(f"First instance of {label}:")
-    print(full_data[full_data['label'] == label].iloc[0])
+
 
 # encodes the label
 label_encoder = LabelEncoder()
@@ -242,7 +244,7 @@ beta_1 = 0.5
 beta_2 = 0.9
 
 log_step = 100
-epochs = 10 + 1
+epochs = 250 + 1
 learning_rate = 5e-4
 models_dir = '../cache'
 
@@ -368,5 +370,5 @@ plot_class_distribution(full_data, 'Real Data Class Distribution')
 plot_class_distribution(synth_data, 'Synthetic Data Class Distribution')
 
 # Plot feature comparisons (adjust 'feature1' and 'feature2' to your dataset's features)
-plot_feature_comparison(full_data, synth_data, 'flow_duration', 'flow_duration')
+plot_feature_comparison(full_data, synth_data, 'flow_duration', 'Duration')
 

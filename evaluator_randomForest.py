@@ -68,11 +68,21 @@ print("TensorFlow version:", tf.__version__)
 #########################################################
 synth = RegularSynthesizer.load('cyberattack_cwgangp_model_full.pkl')
 
-# Optional Condition array
-cond_array = pd.DataFrame({'label': 200000*[0] + 200000*[1]})  # for cgans
+samples_per_class = 1000  # Adjust this as needed
+
+# Create an array that contains the class code repeated for the number of samples per class
+conditions = []
+for code in class_codes.values():
+    conditions.extend([code] * samples_per_class)
+
+# Optionally shuffle the conditions to randomize the order
+# np.random.shuffle(conditions)
+
+# Create a DataFrame for these conditions
+cond_array = pd.DataFrame(conditions, columns=['label'])
 
 # Generating synthetic samples
-synth_data = synth.sample(cond_array)  # for cgans
+synth_data = synth.sample(cond_array)  # # This uses the condition array
 
 # synth_data = synth.sample(100000)  # for non cgans
 
