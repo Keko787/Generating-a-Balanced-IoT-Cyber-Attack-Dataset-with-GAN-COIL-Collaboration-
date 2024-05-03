@@ -243,7 +243,7 @@ batch_size = 500
 beta_1 = 0.5
 beta_2 = 0.9
 
-log_step = 100
+log_step = 10
 epochs = 250 + 1
 learning_rate = 5e-4
 models_dir = '../cache'
@@ -252,14 +252,29 @@ models_dir = '../cache'
 gan_args = ModelParameters(batch_size=batch_size,
                            lr=learning_rate,
                            betas=(beta_1, beta_2),
+                           layers_dim=dim,
                            noise_dim=noise_dim,
-                           layers_dim=dim)
+                           n_cols=46,
+                           condition=True,
+                           n_features=46,
+                           tau_gs,
+                           generator_dims,
+                           critic_dims,
+                           l2_scale,
+                           latent_dim,
+                           gp_lambsa,
+                           pac,
+                           gamma,
+                           tanh)
 
-train_args = TrainParameters(epochs=epochs,
-                             cache_prefix='cgan_cyberAttack',
+train_args = TrainParameters(cache_prefix='cgan_cyberAttack',
+                             label_dim=34,
+                             epochs=epochs,
                              sample_interval=log_step,
-                             label_dim=-1,
-                             labels=labels_tuple
+                             log_frequency=2,
+                             labels=labels_tuple,
+                             episilon,
+                             rounds
                              )
 # create a bining (WHY)
 # minority_class_data[''] = pd.cut(minority_class_data[''], 5).cat.codes
