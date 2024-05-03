@@ -11,8 +11,10 @@ import random
 from tqdm import tqdm
 # from IPython.display import clear_output
 import os
-from sklearn.preprocessing import RobustScaler, LabelEncoder
+from sklearn.preprocessing import StandardScaler, LabelEncoder
 from sklearn.utils import shuffle
+
+
 
 #########################################################
 #    Loading the CSV    #
@@ -39,16 +41,18 @@ num_cols = [
     'Rate', 'Srate', 'ack_count', 'syn_count',
     'fin_count', 'urg_count', 'rst_count', 'Tot sum',
     'Min', 'Max', 'AVG', 'Std', 'Tot size', 'IAT', 'Number',
-    'Magnitue', 'Radius', 'Covariance', 'Variance', 'Weight']
+    'Magnitue', 'Radius', 'Covariance', 'Variance', 'Weight'
+]
 cat_cols = [
     'Protocol Type', 'Drate', 'fin_flag_number', 'syn_flag_number', 'rst_flag_number',
     'psh_flag_number', 'ack_flag_number', 'ece_flag_number',
     'cwr_flag_number', 'HTTP', 'HTTPS', 'DNS', 'Telnet',
     'SMTP', 'SSH', 'IRC', 'TCP', 'UDP', 'DHCP', 'ARP',
-    'ICMP', 'IPv', 'LLC']
+    'ICMP', 'IPv', 'LLC'
+]
 
 # feature scaling
-scaler = RobustScaler()
+scaler = StandardScaler()
 
 for data_set in tqdm(data_sets):
     scaler.fit(pd.read_csv(DATASET_DIRECTORY + data_set)[num_cols])
@@ -86,39 +90,23 @@ for data_set in data_sets:
     df = pd.read_csv(data_path)
     full_data = pd.concat([full_data, df])
 
-# Apply random over-sampling
-min_class_size = full_data['label'].value_counts().min()
-
-if min_class_size > 1:
-    ros = SMOTE(k_neighbors=4, random_state=42)
-else:
-    print("Too few samples in the smallest class to apply SMOTE.")
-
-X = full_data.drop('label', axis=1)
-y = full_data['label']
-X_res, y_res = ros.fit_resample(X, y)
-
-# Combine the resampled features and labels back into a single DataFrame
-full_data_resampled = pd.DataFrame(X_res, columns=X.columns)
-full_data_resampled['label'] = y_res
-
 # prints an instance of each class
 print("Before encoding:")
-unique_labels = full_data_resampled['label'].unique()
+unique_labels = full_data['label'].unique()
 for label in unique_labels:
     print(f"First instance of {label}:")
-    print(full_data_resampled[full_data_resampled['label'] == label].iloc[0])
+    print(full_data[full_data['label'] == label].iloc[0])
 
 # Shuffle data
-full_data_resampled = shuffle(full_data_resampled, random_state=1)
+full_data = shuffle(full_data, random_state=1)
 
 # Scale the features in the dataframe
-full_data_resampled[num_cols] = scaler.fit_transform(full_data_resampled[num_cols])
+full_data[num_cols] = scaler.transform(full_data[num_cols])
 
 # prove if the data is loaded properly
 print("Real data:")
-print(full_data_resampled[:2])
-print(full_data_resampled.shape)
+print(full_data[:2])
+print(full_data.shape)
 
 # Relabel the 'label' column using dict_7classes
 # full_data_resampled['label'] = full_data_resampled['label'].map(dict_7classes)
@@ -127,19 +115,19 @@ print(full_data_resampled.shape)
 # full_data_resampled['label'] = full_data_resampled['label'].map(dict_2classes)
 
 # Assuming 'label' is the column name for the labels in the DataFrame `synth_data`
-unique_labels = full_data_resampled['label'].nunique()
+unique_labels = full_data['label'].nunique()
 
 # Print the number of unique labels
 print(f"There are {unique_labels} unique labels in the dataset.")
 
-class_counts = full_data_resampled['label'].value_counts()
+class_counts = full_data['label'].value_counts()
 print(class_counts)
 
 # Display the first few entries to verify the changes
-print(full_data_resampled)
+print(full_data)
 
 # prep the data to be inputted into model
-data = full_data_resampled
+data = full_data
 
 #########################################################
 #    Preprocessing / Clustering of Class Data    #
@@ -147,7 +135,7 @@ data = full_data_resampled
 
 # encodes the label
 label_encoder = LabelEncoder()
-full_data_resampled['label'] = label_encoder.fit_transform(full_data_resampled['label'])
+full_data['label'] = label_encoder.fit_transform(full_data['label'])
 
 # Store label mappings
 label_mapping = {index: label for index, label in enumerate(label_encoder.classes_)}
@@ -161,7 +149,7 @@ print("After encoding:")
 for label, code in class_codes.items():
     # Print the first instance of each class
     print(f"First instance of {label} (code {code}):")
-    print(full_data_resampled[full_data_resampled['label'] == code].iloc[0])
+    print(full_data[full_data['label'] == code].iloc[0])
 
 # # Ensure all data for clustering is numeric
 # clustering_features = [col for col in num_cols if col in minority_class_data.columns]  # Ensure these are only numeric
@@ -193,4 +181,39 @@ for label, code in class_codes.items():
 # # Display some entries to verify the changes
 # print(full_data_resampled[['label', 'Cluster']].head())
 
+print(full_data.head())
+
+###########################################################
+#    SAMPLING     #
+###########################################################
+
+min_class_size = full_data['label'].value_counts().min()
+
+# Apply random over-sampling
+smote_os = SMOTE(k_neighbors=4, random_state=42)
+
+X = full_data.drop('label', axis=1)
+y = full_data['label']
+X_resampled, y_res = smote_os.fit_resample(X, y)
+
+# Combine the resampled features and labels back into a single DataFrame
+full_data_resampled = pd.DataFrame(X_resampled, columns=X.columns)
+full_data_resampled['label'] = y_res
+
+print("Resampled Data (SCALED):")
+for label, code in class_codes.items():
+    # Print the first instance of each class
+    print(f"First instance of {label} (code {code}):")
+    print(full_data_resampled[full_data_resampled['label'] == code].iloc[0])
 print(full_data_resampled.head())
+
+full_data_resampled[num_cols] = scaler.inverse_transform(full_data_resampled[num_cols], copy=None)
+
+print("Resampled Data (UNSCALED):")
+for label, code in class_codes.items():
+    # Print the first instance of each class
+    print(f"First instance of {label} (code {code}):")
+    print(full_data_resampled[full_data_resampled['label'] == code].iloc[0])
+print(full_data_resampled.head())
+
+print(sum(n < 0 for n in full_data_resampled.values.flatten()))
