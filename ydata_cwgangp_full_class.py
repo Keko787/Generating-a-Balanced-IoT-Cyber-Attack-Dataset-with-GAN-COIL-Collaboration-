@@ -177,8 +177,6 @@ data = full_data
 #    Preprocessing / Clustering of Class Data    #
 #########################################################
 
-
-
 # encodes the label
 label_encoder = LabelEncoder()
 full_data['label'] = label_encoder.fit_transform(full_data['label'])
@@ -244,7 +242,7 @@ beta_1 = 0.5
 beta_2 = 0.9
 
 log_step = 10
-epochs = 250 + 1
+epochs = 500 + 1
 learning_rate = 5e-4
 models_dir = '../cache'
 
@@ -257,24 +255,15 @@ gan_args = ModelParameters(batch_size=batch_size,
                            n_cols=46,
                            condition=True,
                            n_features=46,
-                           tau_gs,
-                           generator_dims,
-                           critic_dims,
-                           l2_scale,
-                           latent_dim,
-                           gp_lambsa,
-                           pac,
-                           gamma,
-                           tanh)
+                           latent_dim=46,
+                           )
 
-train_args = TrainParameters(cache_prefix='cgan_cyberAttack',
+train_args = TrainParameters(cache_prefix='cwgangp_cyberAttack',
                              label_dim=34,
                              epochs=epochs,
                              sample_interval=log_step,
-                             log_frequency=2,
+                             log_frequency=True,
                              labels=labels_tuple,
-                             episilon,
-                             rounds
                              )
 # create a bining (WHY)
 # minority_class_data[''] = pd.cut(minority_class_data[''], 5).cat.codes
@@ -286,14 +275,14 @@ synth = RegularSynthesizer(modelname='cwgangp', model_parameters=gan_args)
 synth.fit(data=full_data, label_cols=['label'], train_arguments=train_args, num_cols=num_cols, cat_cols=cat_cols)
 
 # Saving the synthesizer
-synth.save('cyberattack_cwgangp_model_full.pkl')
+synth.save('cyberattack_cwgangp_model_full_1.pkl')
 
 
 #########################################################
 #    Loading and sampling from a trained synthesizer    #
 #########################################################
 
-synth = RegularSynthesizer.load('cyberattack_cwgangp_model_full.pkl')
+synth = RegularSynthesizer.load('cyberattack_cwgangp_model_full_1.pkl')
 
 samples_per_class = 1000  # Adjust this as needed
 
