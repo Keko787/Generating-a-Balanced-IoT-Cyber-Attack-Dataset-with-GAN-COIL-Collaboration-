@@ -46,7 +46,7 @@ import sklearn.cluster as cluster
 from sklearn.model_selection import cross_val_score
 from sklearn.model_selection import cross_val_predict
 from sklearn.model_selection import KFold
-from sklearn.preprocessing import StandardScaler, LabelEncoder
+from sklearn.preprocessing import StandardScaler, RobustScaler, PowerTransformer, LabelEncoder, MinMaxScaler
 from sklearn.utils import shuffle
 from sklearn.impute import SimpleImputer
 from sklearn.pipeline import Pipeline
@@ -89,17 +89,11 @@ num_cols = [
     'Min', 'Max', 'AVG', 'Std', 'Tot size', 'IAT', 'Number',
     'Magnitue', 'Radius', 'Covariance', 'Variance', 'Weight',]
 cat_cols = [
-    'Protocol Type', 'Drate','fin_flag_number', 'syn_flag_number', 'rst_flag_number',
+    'Protocol Type', 'Drate', 'fin_flag_number', 'syn_flag_number', 'rst_flag_number',
     'psh_flag_number', 'ack_flag_number', 'ece_flag_number',
     'cwr_flag_number', 'HTTP', 'HTTPS', 'DNS', 'Telnet',
     'SMTP', 'SSH', 'IRC', 'TCP', 'UDP', 'DHCP', 'ARP',
     'ICMP', 'IPv', 'LLC',]
-
-# feature scaling
-scaler = StandardScaler()
-
-for data_set in tqdm(data_sets):
-    scaler.fit(pd.read_csv(DATASET_DIRECTORY + data_set)[num_cols])
 
 dict_7classes = {'DDoS-RSTFINFlood': 'DDoS', 'DDoS-PSHACK_Flood': 'DDoS', 'DDoS-SYN_Flood': 'DDoS',
                  'DDoS-UDP_Flood': 'DDoS', 'DDoS-TCP_Flood': 'DDoS', 'DDoS-ICMP_Flood': 'DDoS',
@@ -127,59 +121,64 @@ dict_2classes = {'DDoS-RSTFINFlood': 'Attack', 'DDoS-PSHACK_Flood': 'Attack', 'D
                  'DictionaryBruteForce': 'Attack'}
 
 # extracting data from csv to input into data frame
-full_data = pd.DataFrame()
+real_train_data = pd.DataFrame()
 for data_set in data_sets:
     print(f"data set {data_set} out of {len(data_sets)} \n")
     data_path = os.path.join(DATASET_DIRECTORY, data_set)
     df = pd.read_csv(data_path)
-    full_data = pd.concat([full_data, df])
+    real_train_data = pd.concat([real_train_data, df])
 
 # prints an instance of each class
-print("Before encoding:")
-unique_labels = full_data['label'].unique()
+print("Before Encoding and Scaling:")
+unique_labels = real_train_data['label'].unique()
 for label in unique_labels:
     print(f"First instance of {label}:")
-    print(full_data[full_data['label'] == label].iloc[0])
-
-# Shuffle data
-full_data = shuffle(full_data, random_state=1)
-
-# Scale the features in the dataframe
-full_data[num_cols] = scaler.transform(full_data[num_cols])
-
-# prove if the data is loaded properly
-print("Real data:")
-print(full_data[:2])
-print(full_data.shape)
-
-# Relabel the 'label' column using dict_7classes
-# full_data['label'] = full_data['label'].map(dict_7classes)
-
-# # Relabel the 'label' column using dict_2classes
-# full_data['label'] = full_data['label'].map(dict_2classes)
-
-# Assuming 'label' is the column name for the labels in the DataFrame `synth_data`
-unique_labels = full_data['label'].nunique()
-
-# Print the number of unique labels
-print(f"There are {unique_labels} unique labels in the dataset.")
-
-class_counts = full_data['label'].value_counts()
-print(class_counts)
-
-# Display the first few entries to verify the changes
-print(full_data)
-
-# prep the data to be inputted into model
-data = full_data
+    print(real_train_data[real_train_data['label'] == label].iloc[0])
 
 #########################################################
 #    Preprocessing / Clustering of Class Data    #
 #########################################################
 
+# Shuffle data
+real_train_data = shuffle(real_train_data, random_state=1)
+
+# feature scaling
+# scaler = RobustScaler()
+scaler = MinMaxScaler(feature_range=(0, 1))
+# transformer = PowerTransformer(method='yeo-johnson')
+
+# train the scalar
+scaler.fit(real_train_data[num_cols])
+
+# Scale the features in the dataframe
+real_train_data[num_cols] = scaler.transform(real_train_data[num_cols])
+
+# prove if the data is loaded properly
+print("Real data:")
+print(real_train_data[:2])
+print(real_train_data.shape)
+
+# Relabel the 'label' column using dict_7classes
+# full_data['label'] = full_data['label'].map(dict_7classes)
+
+# Relabel the 'label' column using dict_2classes
+# full_data['label'] = full_data['label'].map(dict_2classes)
+
+# Assuming 'label' is the column name for the labels in the DataFrame `synth_data`
+unique_labels = real_train_data['label'].nunique()
+
+# Print the number of unique labels
+print(f"There are {unique_labels} unique labels in the dataset.")
+
+class_counts = real_train_data['label'].value_counts()
+print(class_counts)
+
+# Display the first few entries to verify the changes
+print(real_train_data.head())
+
 # encodes the label
 label_encoder = LabelEncoder()
-full_data['label'] = label_encoder.fit_transform(full_data['label'])
+real_train_data['label'] = label_encoder.fit_transform(real_train_data['label'])
 
 # Store label mappings
 label_mapping = {index: label for index, label in enumerate(label_encoder.classes_)}
@@ -193,39 +192,9 @@ print("After encoding:")
 for label, code in class_codes.items():
     # Print the first instance of each class
     print(f"First instance of {label} (code {code}):")
-    print(full_data[full_data['label'] == code].iloc[0])
+    print(real_train_data[real_train_data['label'] == code].iloc[0])
 
-# # Ensure all data for clustering is numeric
-# clustering_features = [col for col in num_cols if col in minority_class_data.columns]  # Ensure these are only numeric
-#
-# # --- KMeans Clustering ---
-# algorithm = cluster.KMeans
-# args, kwds = (), {'n_clusters': 2, 'random_state': 0}
-# labels = algorithm(*args, **kwds).fit_predict(minority_class_data[clustering_features])
-#
-# # Creating a new DataFrame to see how many items are in each cluster
-# cluster_counts = pd.DataFrame([[np.sum(labels == i)] for i in np.unique(labels)], columns=['count'], index=np.unique(labels))
-# print("Cluster counts in the minority class:")
-# print(cluster_counts)
-#
-# # Merging this back to the full dataset if needed
-# full_data.loc[full_data['label'] == 'Benign', 'Cluster'] = labels
-#
-# # If 'Cluster' column has been created and needs encoding
-# if 'Cluster' in full_data.columns:
-#     full_data['Cluster'] = label_encoder.fit_transform(full_data['Cluster'])
-#
-# # Impute NaN values in 'label' and 'Cluster' with the mode (most frequent value)
-# for column in ['label', 'Cluster']:
-#     mode_value = full_data[column].mode()[0]
-#     full_data[column].fillna(mode_value, inplace=True)
-#
-# print(full_data[['label', 'Cluster']].isna().sum())
-#
-# # Display some entries to verify the changes
-# print(full_data[['label', 'Cluster']].head())
-
-print(full_data.head())
+print(real_train_data.head())
 
 #########################################################
 #    Defining Training Parameters and Training Model    #
@@ -242,7 +211,7 @@ beta_1 = 0.5
 beta_2 = 0.9
 
 log_step = 10
-epochs = 500 + 1
+epochs = 5 + 1
 learning_rate = 5e-4
 models_dir = '../cache'
 
@@ -272,17 +241,17 @@ train_args = TrainParameters(cache_prefix='cwgangp_cyberAttack',
 synth = RegularSynthesizer(modelname='cwgangp', model_parameters=gan_args)
 
 # Training the Conditional GAN
-synth.fit(data=full_data, label_cols=['label'], train_arguments=train_args, num_cols=num_cols, cat_cols=cat_cols)
+synth.fit(data=real_train_data, label_cols=['label'], train_arguments=train_args, num_cols=num_cols, cat_cols=cat_cols)
 
 # Saving the synthesizer
-synth.save('cyberattack_cwgangp_model_full_1.pkl')
+synth.save('cyberattack_cwgangp_model_full_2.pkl')
 
 
 #########################################################
 #    Loading and sampling from a trained synthesizer    #
 #########################################################
 
-synth = RegularSynthesizer.load('cyberattack_cwgangp_model_full_1.pkl')
+synth = RegularSynthesizer.load('cyberattack_cwgangp_model_full_2.pkl')
 
 samples_per_class = 1000  # Adjust this as needed
 
@@ -300,10 +269,6 @@ cond_array = pd.DataFrame(conditions, columns=['label'])
 # Generating synthetic samples
 synth_data = synth.sample(cond_array)  # # This uses the condition array
 
-# synth_data = synth.sample(100000)  # for non cgans
-
-print(synth_data.head(),"\n")
-
 # find the amount of labels in the synth data
 unique_labels = synth_data['label'].nunique()
 
@@ -311,28 +276,58 @@ unique_labels = synth_data['label'].nunique()
 print(f"There are {unique_labels} unique labels in the dataset.")
 
 class_counts = synth_data['label'].value_counts()
-print(class_counts,"\n")
+print(class_counts, "\n")
 
+print("Synthetic Data (SCALED):")
 for label, code in class_codes.items():
     # Print the first instance of each class
     print(f"First instance of {label} (code {code}):")
-    print(full_data[full_data['label'] == code].iloc[0])
+    print(synth_data[synth_data['label'] == code].iloc[0])
+print(synth_data.head(), "\n")
 
-# Save the synthetic data to a CSV file
-synth_data.to_csv('synthetic_data.csv', index=False)
+print("real train data Data (SCALED):")
+for label, code in class_codes.items():
+    # Print the first instance of each class
+    print(f"First instance of {label} (code {code}):")
+    print(real_train_data[real_train_data['label'] == code].iloc[0])
+print(real_train_data.head(), "\n")
 
-code_to_class = {v: k for k, v in class_codes.items()}
+# inverse the scale on synthetic data
+synth_data[num_cols] = scaler.inverse_transform(synth_data[num_cols])
+
+# inverse the scale on synthetic data
+real_train_data[num_cols] = scaler.inverse_transform(real_train_data[num_cols])
+
+print("Synthetic Data (UNSCALED):")
+for label, code in class_codes.items():
+    # Print the first instance of each class
+    print(f"First instance of {label} (code {code}):")
+    print(synth_data[synth_data['label'] == code].iloc[0])
+print(synth_data.head(), "\n")
+
+print("real train data Data (UNSCALED):")
+for label, code in class_codes.items():
+    # Print the first instance of each class
+    print(f"First instance of {label} (code {code}):")
+    print(real_train_data[real_train_data['label'] == code].iloc[0])
+print(real_train_data.head(), "\n")
 
 # Decode the synthetic data labels
+code_to_class = {v: k for k, v in class_codes.items()}
 synth_data['label'] = synth_data['label'].map(code_to_class)
 
 # Decode labels in the real dataset using the LabelEncoder
-full_data['label'] = label_encoder.inverse_transform(full_data['label'])
+real_train_data['label'] = label_encoder.inverse_transform(real_train_data['label'])
 
 # Print some of the decoded data
 print(synth_data.head())
 
-# Assuming `full_data` is your original data and `synth_data` is the synthetic data
+# Save the synthetic data to a CSV file
+synth_data.to_csv('synthetic_data.csv', index=False)
+
+#########################################################
+#            Making Graphs and diagrams                 #
+#########################################################
 
 def plot_class_distribution(data, title):
     plt.figure(figsize=(10, 6))
@@ -368,11 +363,10 @@ def plot_feature_comparison(real_data, synth_data, feature1, feature2):
     plt.tight_layout()  # Adjust layout to make room for label rotation
     plt.show()
 
-
 # Plot class distribution for both real and synthetic data
-plot_class_distribution(full_data, 'Real Data Class Distribution')
+plot_class_distribution(real_train_data, 'Real Data Class Distribution')
 plot_class_distribution(synth_data, 'Synthetic Data Class Distribution')
 
 # Plot feature comparisons (adjust 'feature1' and 'feature2' to your dataset's features)
-plot_feature_comparison(full_data, synth_data, 'flow_duration', 'Duration')
+plot_feature_comparison(real_train_data, synth_data, 'flow_duration', 'Duration')
 
