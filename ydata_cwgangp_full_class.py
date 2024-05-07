@@ -41,6 +41,7 @@ import seaborn as sns
 
 from ydata_synthetic.synthesizers.regular import RegularSynthesizer
 from ydata_synthetic.synthesizers import ModelParameters, TrainParameters
+from ydata_profiling import ProfileReport
 
 import sklearn.cluster as cluster
 from sklearn.model_selection import cross_val_score
@@ -211,7 +212,7 @@ beta_1 = 0.5
 beta_2 = 0.9
 
 log_step = 10
-epochs = 5 + 1
+epochs = 1 + 1
 learning_rate = 5e-4
 models_dir = '../cache'
 
@@ -224,6 +225,8 @@ gan_args = ModelParameters(batch_size=batch_size,
                            n_cols=46,
                            condition=True,
                            n_features=46,
+                           generator_dims=[32, 16, 8],
+                           critic_dims=[32, 16, 8],
                            latent_dim=46,
                            )
 
@@ -370,3 +373,7 @@ plot_class_distribution(synth_data, 'Synthetic Data Class Distribution')
 # Plot feature comparisons (adjust 'feature1' and 'feature2' to your dataset's features)
 plot_feature_comparison(real_train_data, synth_data, 'flow_duration', 'Duration')
 
+original_report = ProfileReport(real_train_data, title='Original Data', minimal=True)
+resampled_report = ProfileReport(synth_data, title='Resampled Data', minimal=True)
+comparison_report = original_report.compare(resampled_report)
+comparison_report.to_file('./profile_reports/cwgangp_original_vs_synth.html')
