@@ -136,10 +136,10 @@ for data_set in training_data_sets:
     real_train_data = pd.concat([real_train_data, df])
 
 # Relabel the 'label' column using dict_7classes
-# full_data['label'] = full_data['label'].map(dict_7classes)
+# real_train_data['label'] = real_train_data['label'].map(dict_7classes)
 
 # Relabel the 'label' column using dict_2classes
-# full_data['label'] = full_data['label'].map(dict_2classes)
+# real_train_data['label'] = real_train_data['label'].map(dict_2classes)
 
 #########################################################
 #    Preprocessing Data                                 #
@@ -220,7 +220,7 @@ print(real_train_data.head(), "\n")
 # Extracting numeric codes for the labels from the previously created class_codes dictionary
 labels_tuple = tuple(class_codes.values())
 
-# Define the Conditional GAN and training parameters
+#  --- Define the Conditional GAN and training parameters ---
 
 # values for model settings
 noise_dim = 46
@@ -262,6 +262,7 @@ train_args = TrainParameters(cache_prefix='cwgangp_cyberAttack',
                              log_frequency=True,
                              labels=labels_tuple,
                              )
+
 # create a bining (WHY)
 # minority_class_data[''] = pd.cut(minority_class_data[''], 5).cat.codes
 
@@ -273,7 +274,6 @@ synth.fit(data=real_train_data, label_cols=['label'], train_arguments=train_args
 
 # Saving the GAN Model
 synth.save('cyberattack_cwgangp_model_full_2.pkl')
-
 
 #########################################################
 #    Loading GAN and Generating Samples                 #
