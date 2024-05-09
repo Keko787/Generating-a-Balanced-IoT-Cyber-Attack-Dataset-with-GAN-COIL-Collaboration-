@@ -63,7 +63,7 @@ print("TensorFlow version:", tf.__version__)
 #########################################################
 #    Loading Model and Generating Data   #
 #########################################################
-synth = RegularSynthesizer.load('cyberattack_cwgangp_model_full.pkl')
+synth = RegularSynthesizer.load('../GAN_models/cyberattack_cwgangp_model_full.pkl')
 
 # Generating synthetic samples
 cond_array = pd.DataFrame(2000*[0, 1], columns=['label'])  # for cgans
