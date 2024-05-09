@@ -167,7 +167,7 @@ scaler.fit(real_train_data[num_cols])
 
 # Save the Scaler for use in other files
 # joblib.dump(scaler, 'RobustScaler_.pkl')
-joblib.dump(scaler, 'MinMaxScaler_.pkl')
+joblib.dump(scaler, 'scalar_models/MinMaxScaler_.pkl')
 # joblib.dump(scaler, 'PowerTransformer_.pkl')
 
 # Scale the features in the real train dataframe
@@ -255,7 +255,7 @@ gan_args = ModelParameters(batch_size=batch_size,
                            )
 
 # Settings for training Parameters
-train_args = TrainParameters(cache_prefix='cgan_cyberAttack',
+train_args = TrainParameters(cache_prefix='cwgangp_cyberAttack',
                              label_dim=label_amount,
                              epochs=epochs,
                              sample_interval=log_step,
@@ -267,19 +267,20 @@ train_args = TrainParameters(cache_prefix='cgan_cyberAttack',
 # minority_class_data[''] = pd.cut(minority_class_data[''], 5).cat.codes
 
 # Init the Conditional GAN providing the index of the label column as one of the arguments
-synth = RegularSynthesizer(modelname='cgan', model_parameters=gan_args)
+synth = RegularSynthesizer(modelname='cwgangp', model_parameters=gan_args)
 
 # Training the Conditional GAN
 synth.fit(data=real_train_data, label_cols=['label'], train_arguments=train_args, num_cols=num_cols, cat_cols=cat_cols)
 
-# Saving the synthesizer
-synth.save('cyberattack_cgan_model_full.pkl')
+# Saving the GAN Model
+synth.save('cyberattack_cwgangp_model_full_2.pkl')
 
 #########################################################
-#    Loading and sampling from a trained synthesizer    #
+#    Loading GAN and Generating Samples                 #
 #########################################################
 
-synth = RegularSynthesizer.load('cyberattack_cgan_model_full.pkl')
+# Load the GAN Model
+synth = RegularSynthesizer.load('GAN_models/cyberattack_cwgangp_model_full_2.pkl')
 
 samples_per_class = 1000  # Adjust this as needed
 
@@ -359,6 +360,7 @@ print(synth_data.head(), "\n")
 
 # Save the synthetic data to a CSV file
 synth_data.to_csv('synthetic_data.csv', index=False)
+
 #########################################################
 #         Making Graphs, Documents, and Diagrams        #
 #########################################################
@@ -408,4 +410,4 @@ plot_feature_comparison(real_train_data, synth_data, 'flow_duration', 'Duration'
 original_report = ProfileReport(real_train_data, title='Original Data', minimal=True)
 resampled_report = ProfileReport(synth_data, title='Resampled Data', minimal=True)
 comparison_report = original_report.compare(resampled_report)
-comparison_report.to_file('./profile_reports/cgan_original_vs_synth.html')
+comparison_report.to_file('./profile_reports/cwgangp_original_vs_synth.html')

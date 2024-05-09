@@ -69,7 +69,7 @@ print("TensorFlow version:", tf.__version__)
 #    Loading GAN Model and Generating Data              #
 #########################################################
 # loading GAN
-synth = RegularSynthesizer.load('cyberattack_cwgangp_model_full_2.pkl')
+synth = RegularSynthesizer.load('../GAN_models/cyberattack_cwgangp_model_full_2.pkl')
 
 # specifying the samples per class
 samples_per_class = 1000  # Adjust this as needed
@@ -280,7 +280,7 @@ for label in unique_labels_synth:
 
 # Load up Scaler from GAN Training for Features
 #scaler = joblib.load('RobustScaler_.pkl')
-scaler = joblib.load('MinMaxScaler_.pkl')
+scaler = joblib.load('../scalar_models/MinMaxScaler_.pkl')
 # scaler = joblib.load('PowerTransformer_.pkl')
 
 # train the scalar on train data features

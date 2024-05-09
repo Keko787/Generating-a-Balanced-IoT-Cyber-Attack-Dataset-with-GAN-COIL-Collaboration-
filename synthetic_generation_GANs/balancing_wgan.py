@@ -167,7 +167,7 @@ scaler.fit(real_train_data[num_cols])
 
 # Save the Scaler for use in other files
 # joblib.dump(scaler, 'RobustScaler_.pkl')
-joblib.dump(scaler, 'MinMaxScaler_.pkl')
+joblib.dump(scaler, 'scalar_models/MinMaxScaler_.pkl')
 # joblib.dump(scaler, 'PowerTransformer_.pkl')
 
 # Scale the features in the real train dataframe
