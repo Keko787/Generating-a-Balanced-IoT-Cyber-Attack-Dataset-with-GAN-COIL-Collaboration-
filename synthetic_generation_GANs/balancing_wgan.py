@@ -68,7 +68,7 @@ print("TensorFlow version:", tf.__version__)
 #########################################################
 #    Loading the CSV    #
 #########################################################
-DATASET_DIRECTORY = './archive/'
+DATASET_DIRECTORY = '../archive/'
 
 # List the files in the dataset
 csv_filepaths = [filename for filename in os.listdir(DATASET_DIRECTORY) if filename.endswith('.csv')]
@@ -167,7 +167,7 @@ scaler.fit(real_train_data[num_cols])
 
 # Save the Scaler for use in other files
 # joblib.dump(scaler, 'RobustScaler_.pkl')
-joblib.dump(scaler, 'scalar_models/MinMaxScaler_.pkl')
+joblib.dump(scaler, './scalar_models/MinMaxScaler_.pkl')
 # joblib.dump(scaler, 'PowerTransformer_.pkl')
 
 # Scale the features in the real train dataframe
@@ -238,7 +238,7 @@ log_step = 10
 label_amount = 34
 epochs = 0 + 1
 learning_rate = 5e-4
-models_dir = '../cache'
+models_dir = './GAN_analysis/cache'
 
 # Input arguments for making and training the model
 gan_args = ModelParameters(batch_size=batch_size,
@@ -257,13 +257,13 @@ synth = RegularSynthesizer(modelname='wgangp', model_parameters=gan_args, n_crit
 synth.fit(real_train_data, train_args, num_cols, cat_cols)
 
 # Save the GAN model
-synth.save('attack_wgan_model.pkl')
+synth.save('./GAN_models/attack_wgan_model.pkl')
 
 #########################################################
 #    Loading and sampling from a trained synthesizer    #
 #########################################################
 # Loading model
-synth = RegularSynthesizer.load('attack_wgan_model.pkl')
+synth = RegularSynthesizer.load('./GAN_models/attack_wgan_model.pkl')
 
 # Generating synthetic samples
 synth_data = synth.sample(1000)
@@ -330,7 +330,7 @@ real_train_data['label'] = label_encoder.inverse_transform(real_train_data['labe
 print(synth_data.head(), "\n")
 
 # Save the synthetic data to a CSV file
-synth_data.to_csv('synthetic_data.csv', index=False)
+synth_data.to_csv('./GAN_analysis/results/synthetic_data.csv', index=False)
 
 #########################################################
 #         Making Graphs, Documents, and Diagrams        #
@@ -381,4 +381,4 @@ plot_feature_comparison(real_train_data, synth_data, 'flow_duration', 'Duration'
 original_report = ProfileReport(real_train_data, title='Original Data', minimal=True)
 resampled_report = ProfileReport(synth_data, title='Resampled Data', minimal=True)
 comparison_report = original_report.compare(resampled_report)
-comparison_report.to_file('./profile_reports/wgangp_original_vs_synth.html')
+comparison_report.to_file('./GAN_analysis/profile_reports/wgangp_original_vs_synth.html')
