@@ -123,7 +123,7 @@ print(synth_train_data.head(), "\n")
 #########################################################
 #    Loading Real Data                                  #
 #########################################################
-DATASET_DIRECTORY = '../archive/'
+DATASET_DIRECTORY = '../../archive/'
 
 # List the files in the dataset
 csv_filepaths = [filename for filename in os.listdir(DATASET_DIRECTORY) if filename.endswith('.csv')]
@@ -363,36 +363,43 @@ y_test_real = sampled_real_test_data['label']               # Real Labels
 #########################################################
 #    Setting up IDS Classifier Model  #
 #########################################################
-evaluator_type = 'RandomForest'
+evaluator_type = 'KNearestNeighbor'
 # Classification types: 33+1, 7+1, 1+1
 _class = '33+1'
 
 match evaluator_type:
     case 'XGBoost':
+        print("Using XGBoost Classifier...\n")
         from xgboost import XGBClassifier
         evaluator = XGBClassifier()
 
     case 'LogisticRegression':
+        print("Using LogisticRegression Classifier...\n")
         from sklearn.linear_model import LogisticRegression
         evaluator = LogisticRegression(random_state=42, n_jobs=-1)
 
     case 'Perceptron':
+        print("Using Perceptron Classifier...\n")
         from sklearn.linear_model import Perceptron
         evaluator = Perceptron(random_state=42, n_jobs=-1)
 
     case 'AdaBoost':
+        print("Using AdaBoost Classifier...\n")
         from sklearn.ensemble import AdaBoostClassifier
         evaluator = AdaBoostClassifier(random_state=42, algorithm='SAMME')
 
     case 'RandomForest':
+        print("Using RandomForest Classifier...\n")
         from sklearn.ensemble import RandomForestClassifier
         evaluator = RandomForestClassifier(random_state=42, n_jobs=-1)
 
     case 'DeepNeuralNetwork':
+        print("Using DeepNeuralNetwork Classifier...\n")
         from sklearn.neural_network import MLPClassifier
         evaluator = MLPClassifier(random_state=42)
 
     case 'KNearestNeighbor':
+        print("Using KNearestNeighbor Classifier...\n")
         from sklearn.neighbors import KNeighborsClassifier
         evaluator = KNeighborsClassifier(n_jobs=-1)
 
@@ -401,7 +408,7 @@ match evaluator_type:
 
 
 # XGBoost for binary classification must be a binary objective
-if evaluator_type == 'XGBoost' and _class == '1+1':
+if evaluator_type == 'XGBoost' and unique_labels_synth == 2:
     evaluator = XGBClassifier(objective='binary:logistic')
 
 #########################################################
@@ -455,6 +462,6 @@ plt.tight_layout()
 # Setting labels and title
 ax.set_xlabel('Predicted labels', fontsize=12)
 ax.set_ylabel('True labels', fontsize=12)
-ax.set_title('Random Forest Evaluation', fontsize=14)
+ax.set_title(f'{evaluator_type} Evaluation', fontsize=14)
 
 plt.show()
