@@ -361,46 +361,48 @@ X_test_real = sampled_real_test_data.drop('label', axis=1)  # Real Features
 y_test_real = sampled_real_test_data['label']               # Real Labels
 
 #########################################################
-#    Setting up Random Forest Classifier Model  #
+#    Setting up IDS Classifier Model  #
 #########################################################
 evaluator_type = 'RandomForest'
+# Classification types: 33+1, 7+1, 1+1
+_class = '33+1'
 
-    match evaluator_type:
-        case 'XGBoost':
-            from xgboost import XGBClassifier
+match evaluator_type:
+    case 'XGBoost':
+        from xgboost import XGBClassifier
+        evaluator = XGBClassifier()
 
-            evaluator = XGBClassifier()
-        case 'LogisticRegression':
-            from sklearn.linear_model import LogisticRegression
+    case 'LogisticRegression':
+        from sklearn.linear_model import LogisticRegression
+        evaluator = LogisticRegression(random_state=42, n_jobs=-1)
 
-            evaluator = LogisticRegression(random_state=42, n_jobs=-1)
-        case 'Perceptron':
-            from sklearn.linear_model import Perceptron
+    case 'Perceptron':
+        from sklearn.linear_model import Perceptron
+        evaluator = Perceptron(random_state=42, n_jobs=-1)
 
-            evaluator = Perceptron(random_state=42, n_jobs=-1)
-        case 'AdaBoost':
-            from sklearn.ensemble import AdaBoostClassifier
+    case 'AdaBoost':
+        from sklearn.ensemble import AdaBoostClassifier
+        evaluator = AdaBoostClassifier(random_state=42, algorithm='SAMME')
 
-            evaluator = AdaBoostClassifier(random_state=42, algorithm='SAMME')
-        case 'RandomForest':
-            from sklearn.ensemble import RandomForestClassifier
+    case 'RandomForest':
+        from sklearn.ensemble import RandomForestClassifier
+        evaluator = RandomForestClassifier(random_state=42, n_jobs=-1)
 
-            evaluator = RandomForestClassifier(random_state=42, n_jobs=-1)
-        case 'DeepNeuralNetwork':
-            from sklearn.neural_network import MLPClassifier
+    case 'DeepNeuralNetwork':
+        from sklearn.neural_network import MLPClassifier
+        evaluator = MLPClassifier(random_state=42)
 
-            evaluator = MLPClassifier(random_state=42)
-        case 'KNearestNeighbor':
-            from sklearn.neighbors import KNeighborsClassifier
+    case 'KNearestNeighbor':
+        from sklearn.neighbors import KNeighborsClassifier
+        evaluator = KNeighborsClassifier(n_jobs=-1)
 
-            evaluator = KNeighborsClassifier(n_jobs=-1)
-        case _:
-            print(f'Invalid evaluator model: {evaluator_type}')
+    case _:
+        print(f'Invalid evaluator model: {evaluator_type}')
 
 
-    # XGBoost for binary classification must be a binary objective
-    if evaluator_type == 'XGBoost' and _class == '1+1':
-        evaluator = XGBClassifier(objective='binary:logistic')
+# XGBoost for binary classification must be a binary objective
+if evaluator_type == 'XGBoost' and _class == '1+1':
+    evaluator = XGBClassifier(objective='binary:logistic')
 
 #########################################################
 #    Training  Random Forest Classifier Model  #
