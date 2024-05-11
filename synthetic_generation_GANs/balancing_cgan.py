@@ -358,7 +358,7 @@ real_train_data['label'] = label_encoder.inverse_transform(real_train_data['labe
 print(synth_data.head(), "\n")
 
 # Save the synthetic data to a CSV file
-synth_data.to_csv('./GAN_analysis/results/synthetic_data.csv', index=False)
+synth_data.to_csv('./GAN_analysis/results/synthetic_data_cgan.csv', index=False)
 #########################################################
 #         Making Graphs, Documents, and Diagrams        #
 #########################################################

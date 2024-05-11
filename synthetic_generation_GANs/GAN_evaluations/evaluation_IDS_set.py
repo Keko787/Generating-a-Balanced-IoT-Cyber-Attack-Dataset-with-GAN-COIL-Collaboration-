@@ -1,6 +1,8 @@
 #########################################################
 #    Imports    #
 #########################################################
+import json
+
 import tensorflow as tf
 
 # List all physical devices and configure them before any other operations
@@ -110,9 +112,17 @@ for label in synth_label_mapping.values():
 # Create a DataFrame for these conditions
 cond_array = pd.DataFrame(conditions, columns=['label'])
 
+# Start the training timer
+start_time_gen = time.time()
+print("Start Generating...\n")
+
 # Generating synthetic samples
 synth_train_data = synth.sample(cond_array)  # # This uses the condition array
 # synth_train_data = synth.sample(100000)  # for non cgans
+
+# End the training timer
+generation_time = time.time() - start_time_gen
+print("Finished Generating...\n")
 
 # print data to review
 print(synth_train_data.head(), "\n")
@@ -136,7 +146,7 @@ if len(csv_filepaths) > sample_size:
     print(csv_filepaths)
 csv_filepaths.sort()
 
-# list of csv files used for training data sets
+# l\ist of csv files used for training data sets
 training_data_sets = csv_filepaths
 
 # Mapping Features
@@ -414,17 +424,35 @@ if evaluator_type == 'XGBoost' and unique_labels_synth == 2:
 #########################################################
 #    Training  Random Forest Classifier Model  #
 #########################################################
+
+# Start the training timer
+start_time_train = time.time()
+print("Start Training...\n")
+
 # Train the model using the synthetic features and labels
 evaluator.fit(X_train_synthetic, y_train_synthetic)
 
+# End the training timer
+training_time = time.time() - start_time_train
+print("Finished Training...\n")
+
 #########################################################
-#    Testing  Random Forest Classifier Model  #
+#    Testing IDS Model  #
 #########################################################
+
+# Start the training timer
+start_time_test = time.time()
+print("Start Testing...\n")
+
 # Use the real testing data set labels
 y_eval_pred = evaluator.predict(X_test_real)
 
+# End the training timer
+testing_time = time.time() - start_time_test
+print("Finished Testing...\n")
+
 #########################################################
-# Analyze Test Results Random Forest Classifier Model  #
+# Analyze Test Results  #
 #########################################################
 from sklearn.metrics import classification_report, accuracy_score
 
@@ -433,8 +461,9 @@ accuracy = accuracy_score(y_test_real, y_eval_pred)
 print(f"Accuracy of the model: {accuracy:.2%}")
 
 # Detailed classification report
+class_report = classification_report(y_test_real, y_eval_pred)
 print("Classification Report:")
-print(classification_report(y_test_real, y_eval_pred))
+print(class_report)
 
 # Confusion Matrix
 conf_matrix = confusion_matrix(y_test_real, y_eval_pred)
@@ -465,3 +494,46 @@ ax.set_ylabel('True labels', fontsize=12)
 ax.set_title(f'{evaluator_type} Evaluation', fontsize=14)
 
 plt.show()
+
+print(f"Generation time for Balanced Synthetic Dataset: {generation_time:.20f} seconds")
+print(f"Training time for Model: {training_time:.20f} seconds")
+print(f"Evaluation time for Real Dataset: {testing_time:.20f} seconds")
+
+#########################################################
+#         Saving Metrics and Results                     #
+#########################################################
+
+
+def save_results(model_name, generation_time_, training_time, testing_time, accuracy, class_report, conf_matrix):
+    # Get the current timestamp
+    timestamp = time.strftime("%Y%m%d%H%M%S")
+
+    # Directory to save classification report text files
+    report_dir = "./synth_data_reports"
+    os.makedirs(report_dir, exist_ok=True)
+
+    # Format the filenames to include the model name and type of dataset
+    filename = f"{model_name}_synth_data_report{timestamp}.txt"
+
+    # Combine reports with accuracy, confusion matrix, training and evaluation times for imbalanced dataset
+    imbalanced_report = {
+        "generation_time_seconds": generation_time_,
+        "training_time_seconds": training_time,
+        "testing_time_seconds": testing_time,
+        "accuracy": accuracy,
+        "class_report": class_report,
+        "conf_matrix": conf_matrix
+    }
+
+    # Save combined report for the imbalanced dataset
+    report_filename = os.path.join(report_dir, filename)
+    with open(report_filename, "w") as report_file:
+        json.dump(imbalanced_report, report_file, indent=4)
+
+    print("GAN reports saved successfully.")
+
+
+save_results('cwgangp', generation_time, training_time, testing_time, accuracy, class_report, conf_matrix)
+
+# Save the synthetic data to a CSV file
+synth_train_data.to_csv('./results/synthetic_EVALUATION_data.csv', index=False)

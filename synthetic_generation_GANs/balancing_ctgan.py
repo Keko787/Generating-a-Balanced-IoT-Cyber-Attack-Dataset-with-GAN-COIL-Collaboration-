@@ -339,7 +339,7 @@ real_train_data['label'] = label_encoder.inverse_transform(real_train_data['labe
 print(synth_data.head(), "\n")
 
 # Save the synthetic data to a CSV file
-synth_data.to_csv('./GAN_analysis/results/synthetic_data.csv', index=False)
+synth_data.to_csv('./GAN_analysis/results/synthetic_data_ctgan.csv', index=False)
 
 #########################################################
 #         Making Graphs, Documents, and Diagrams        #
@@ -390,4 +390,4 @@ plot_feature_comparison(real_train_data, synth_data, 'flow_duration', 'Duration'
 original_report = ProfileReport(real_train_data, title='Original Data', minimal=True)
 resampled_report = ProfileReport(synth_data, title='Resampled Data', minimal=True)
 comparison_report = original_report.compare(resampled_report)
-comparison_report.to_file('./GAN_analysis/profile_reports/cwgangp_original_vs_synth.html')
+comparison_report.to_file('./GAN_analysis/profile_reports/ctgan_original_vs_synth.html')

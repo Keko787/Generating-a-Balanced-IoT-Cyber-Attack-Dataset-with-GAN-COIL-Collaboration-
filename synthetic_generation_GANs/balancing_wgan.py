@@ -257,13 +257,13 @@ synth = RegularSynthesizer(modelname='wgangp', model_parameters=gan_args, n_crit
 synth.fit(real_train_data, train_args, num_cols, cat_cols)
 
 # Save the GAN model
-synth.save('./GAN_models/attack_wgan_model.pkl')
+synth.save('./GAN_models/attack_wgangp_model.pkl')
 
 #########################################################
 #    Loading and sampling from a trained synthesizer    #
 #########################################################
 # Loading model
-synth = RegularSynthesizer.load('./GAN_models/attack_wgan_model.pkl')
+synth = RegularSynthesizer.load('./GAN_models/attack_wgangp_model.pkl')
 
 # Generating synthetic samples
 synth_data = synth.sample(1000)
@@ -330,7 +330,7 @@ real_train_data['label'] = label_encoder.inverse_transform(real_train_data['labe
 print(synth_data.head(), "\n")
 
 # Save the synthetic data to a CSV file
-synth_data.to_csv('./GAN_analysis/results/synthetic_data.csv', index=False)
+synth_data.to_csv('./GAN_analysis/results/synthetic_data_wgangp.csv', index=False)
 
 #########################################################
 #         Making Graphs, Documents, and Diagrams        #
