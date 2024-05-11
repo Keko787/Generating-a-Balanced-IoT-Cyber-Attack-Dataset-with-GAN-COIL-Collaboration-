@@ -258,7 +258,6 @@ unique_labels_real = real_test_data['label'].unique()
 num_unique_labels_real = len(unique_labels_real)
 print(f"There are {num_unique_labels_real} unique labels in the Real dataset.")
 
-
 class_counts_real = real_test_data['label'].value_counts()
 print(class_counts_real)
 
@@ -513,7 +512,7 @@ def save_results(model_name, generation_time_, training_time, testing_time, accu
     os.makedirs(report_dir, exist_ok=True)
 
     # Format the filenames to include the model name and type of dataset
-    filename = f"{model_name}_synth_data_report{timestamp}.txt"
+    filename = f"{model_name}_{evaluator_type}_report{timestamp}.txt"
 
     # Combine reports with accuracy, confusion matrix, training and evaluation times for imbalanced dataset
     imbalanced_report = {
@@ -533,7 +532,7 @@ def save_results(model_name, generation_time_, training_time, testing_time, accu
     print("GAN reports saved successfully.")
 
 
-save_results('cwgangp', generation_time, training_time, testing_time, accuracy, class_report, conf_matrix)
+save_results(f'cwgangp', generation_time, training_time, testing_time, accuracy, class_report, conf_matrix)
 
 # Save the synthetic data to a CSV file
 synth_train_data.to_csv('./results/synthetic_EVALUATION_data.csv', index=False)

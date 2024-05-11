@@ -1,6 +1,8 @@
 #########################################################
 #    Imports    #
 #########################################################
+import json
+
 import tensorflow as tf
 
 # List all physical devices and configure them before any other operations
@@ -66,7 +68,7 @@ print("TensorFlow version:", tf.__version__)
 # print(tf.config.list_physical_devices('GPU'), "\n")
 
 #########################################################
-#    Loading the CSV    #
+#    Loading the Real Data    #
 #########################################################
 DATASET_DIRECTORY = '../archive/'
 
@@ -253,25 +255,43 @@ train_args = TrainParameters(epochs=epochs,
 # Init the GAN model
 synth = RegularSynthesizer(modelname='wgangp', model_parameters=gan_args, n_critic=10)
 
+# Start the training timer
+print("Start Training...\n")
+start_time_train = time.time()
+
 # train the GAN model
 synth.fit(real_train_data, train_args, num_cols, cat_cols)
+
+# End the training timer
+training_time = time.time() - start_time_train
+print("Training Over...\n")
 
 # Save the GAN model
 synth.save('./GAN_models/attack_wgangp_model.pkl')
 
 #########################################################
-#    Loading and sampling from a trained synthesizer    #
+#    Loading GAN and Generating Samples       #
 #########################################################
 # Loading model
 synth = RegularSynthesizer.load('./GAN_models/attack_wgangp_model.pkl')
+
+# Start the training timer
+start_time_gen = time.time()
+print("Start Generating...\n")
 
 # Generating synthetic samples
 synth_data = synth.sample(1000)
 print(synth_data)
 
+# End the training timer
+generation_time = time.time() - start_time_gen
+print("Finished Generating...\n")
+
 #########################################################
 #               Postprocessing and Analysis             #
 #########################################################
+
+scaler = joblib.load('../scalar_models/MinMaxScaler_.pkl')
 
 # find the amount of labels in the synth data
 unique_labels = synth_data['label'].nunique()
@@ -329,12 +349,10 @@ real_train_data['label'] = label_encoder.inverse_transform(real_train_data['labe
 # Print some of the decoded data
 print(synth_data.head(), "\n")
 
-# Save the synthetic data to a CSV file
-synth_data.to_csv('./GAN_analysis/results/synthetic_data_wgangp.csv', index=False)
-
 #########################################################
 #         Making Graphs, Documents, and Diagrams        #
 #########################################################
+
 
 def plot_class_distribution(data, title):
     plt.figure(figsize=(10, 6))
@@ -346,6 +364,7 @@ def plot_class_distribution(data, title):
     plt.xticks(rotation=45, ha='right', fontsize=10)  # Adjust rotation and font size as needed
     plt.tight_layout()  # Adjust layout to make room for label rotation
     plt.show()
+
 
 def plot_feature_comparison(real_data, synth_data, feature1, feature2):
     plt.figure(figsize=(12, 6))
@@ -370,6 +389,10 @@ def plot_feature_comparison(real_data, synth_data, feature1, feature2):
     plt.tight_layout()  # Adjust layout to make room for label rotation
     plt.show()
 
+
+print(f"Training time for Model: {training_time:.20f} seconds")
+print(f"Generation time for Balanced Synthetic Dataset: {generation_time:.20f} seconds")
+
 # Plot class distribution for both real and synthetic data
 plot_class_distribution(real_train_data, 'Real Data Class Distribution')
 plot_class_distribution(synth_data, 'Synthetic Data Class Distribution')
@@ -381,4 +404,39 @@ plot_feature_comparison(real_train_data, synth_data, 'flow_duration', 'Duration'
 original_report = ProfileReport(real_train_data, title='Original Data', minimal=True)
 resampled_report = ProfileReport(synth_data, title='Resampled Data', minimal=True)
 comparison_report = original_report.compare(resampled_report)
-comparison_report.to_file('./GAN_analysis/profile_reports/wgangp_original_vs_synth.html')
+comparison_report.to_file('./GAN_analysis/profile_reports/cwgangp_original_vs_synth.html')
+
+#########################################################
+#         Saving Metrics and Results                     #
+#########################################################
+
+
+def save_results(model_name,  training_time_, generation_time_):
+    # Get the current timestamp
+    timestamp = time.strftime("%Y%m%d%H%M%S")
+
+    # Directory to save classification report text files
+    report_dir = "classification_report_text_results"
+    os.makedirs(report_dir, exist_ok=True)
+
+    # Format the filenames to include the model name and type of dataset
+    filename = f"{model_name}_train_report{timestamp}.txt"
+
+    # Combine reports with accuracy, confusion matrix, training and evaluation times for imbalanced dataset
+    imbalanced_report = {
+        "training_time_seconds": training_time_,
+        "generation_time_seconds": generation_time_
+    }
+
+    # Save combined report for the imbalanced dataset
+    report_filename = os.path.join(report_dir, filename)
+    with open(report_filename, "w") as report_file:
+        json.dump(imbalanced_report, report_file, indent=4)
+
+    print("GAN reports saved successfully.")
+
+
+save_results('cwgangp', generation_time, training_time)
+
+# Save the synthetic data to a CSV file
+synth_data.to_csv('./GAN_analysis/results/synthetic_data.csv', index=False)

@@ -67,7 +67,7 @@ print("TensorFlow version:", tf.__version__)
 # print(tf.config.list_physical_devices('GPU'), "\n")
 
 #########################################################
-#    Loading the CSV    #
+#    Loading the Real Data    #
 #########################################################
 DATASET_DIRECTORY = '../archive/'
 
@@ -290,7 +290,7 @@ synth.save('./GAN_models/cyberattack_cwgangp_model_full_2.pkl')
 
 # Load the GAN Model
 synth = RegularSynthesizer.load('./GAN_models/cyberattack_cwgangp_model_full_2.pkl')
-scaler = joblib.load('../scalar_models/MinMaxScaler_.pkl')
+
 
 samples_per_class = 1000  # Adjust this as needed
 
@@ -319,6 +319,7 @@ print("Finished Generating...\n")
 #########################################################
 #               Postprocessing and Analysis             #
 #########################################################
+scaler = joblib.load('../scalar_models/MinMaxScaler_.pkl')
 
 # find the amount of labels in the synth data
 unique_labels = synth_data['label'].nunique()
@@ -447,7 +448,7 @@ def save_results(model_name,  training_time_, generation_time_):
     os.makedirs(report_dir, exist_ok=True)
 
     # Format the filenames to include the model name and type of dataset
-    filename = f"{model_name}_classification_report_imbalanced_{timestamp}.txt"
+    filename = f"{model_name}_train_report{timestamp}.txt"
 
     # Combine reports with accuracy, confusion matrix, training and evaluation times for imbalanced dataset
     imbalanced_report = {
