@@ -291,7 +291,6 @@ synth.save('./GAN_models/cyberattack_cwgangp_model_full_2.pkl')
 # Load the GAN Model
 synth = RegularSynthesizer.load('./GAN_models/cyberattack_cwgangp_model_full_2.pkl')
 
-
 samples_per_class = 1000  # Adjust this as needed
 
 # Create an array that contains the class code repeated for the number of samples per class

@@ -416,7 +416,7 @@ comparison_report = original_report.compare(resampled_report)
 comparison_report.to_file('./GAN_analysis/profile_reports/cwgangp_original_vs_synth.html')
 
 #########################################################
-#         Saving Metrics and Results                     #
+#         Saving Metrics and Results                    #
 #########################################################
 
 
