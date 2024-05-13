@@ -147,6 +147,7 @@ for data_set in training_data_sets:
 #########################################################
 # loading GAN
 synth = RegularSynthesizer.load('../GAN_models/cyberattack_cwgangp_model_full_2.pkl')
+print(synth.model_name())
 
 # specifying the samples per class
 samples_per_class = 1000  # Adjust this as needed

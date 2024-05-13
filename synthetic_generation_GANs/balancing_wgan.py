@@ -2,6 +2,7 @@
 #    Imports    #
 #########################################################
 import json
+import subprocess
 
 import tensorflow as tf
 
@@ -67,6 +68,7 @@ print("TensorFlow version:", tf.__version__)
 # print(tf.config.list_physical_devices(), "\n", tf.config.list_logical_devices(), "\n")
 # print(tf.config.list_physical_devices('GPU'), "\n")
 
+timestamp_experiment = time.strftime("%Y%m%d%H%M%S")
 #########################################################
 #    Loading the Real Data    #
 #########################################################
@@ -249,21 +251,35 @@ gan_args = ModelParameters(batch_size=batch_size,
                            noise_dim=noise_dim,
                            layers_dim=dim)
 
-train_args = TrainParameters(epochs=epochs,
-                             sample_interval=log_step)
-
 # Init the GAN model
 synth = RegularSynthesizer(modelname='wgangp', model_parameters=gan_args, n_critic=10)
 
+prep_real_train_data, prep_labels = synth._prep_fit(data=real_train_data, label_cols=['label'], num_cols=num_cols
+                                                    , cat_cols=cat_cols)
+
+train_args = TrainParameters(epochs=epochs,
+                             sample_interval=log_step)
+
 # Start the training timer
 print("Start Training...\n")
+# start the hard logging
+proc = subprocess.Popen(['python', './GAN_analysis/hardwareAnalyzer.py'])
+
+# start the training timer
 start_time_train = time.time()
 
-# train the GAN model
-synth.fit(real_train_data, train_args, num_cols, cat_cols)
+# Training the Conditional GAN
+synth.fit(data=real_train_data, label_cols=['label'], train_arguments=train_args, num_cols=num_cols, cat_cols=cat_cols)
 
 # End the training timer
 training_time = time.time() - start_time_train
+
+# Ensure we kill the subprocess when done
+proc.terminate()
+try:
+    proc.wait(timeout=10)
+except subprocess.TimeoutExpired:
+    proc.kill()
 print("Training Over...\n")
 
 # Save the GAN model
@@ -275,6 +291,9 @@ synth.save('./GAN_models/attack_wgangp_model.pkl')
 # Loading model
 synth = RegularSynthesizer.load('./GAN_models/attack_wgangp_model.pkl')
 
+# start the hardware logging
+proc = subprocess.Popen(['python', './GAN_analysis/hardwareAnalyzer.py'])
+
 # Start the training timer
 start_time_gen = time.time()
 print("Start Generating...\n")
@@ -285,6 +304,13 @@ print(synth_data)
 
 # End the training timer
 generation_time = time.time() - start_time_gen
+
+# Ensure we kill the subprocess when done
+proc.terminate()
+try:
+    proc.wait(timeout=10)
+except subprocess.TimeoutExpired:
+    proc.kill()
 print("Finished Generating...\n")
 
 #########################################################
@@ -404,7 +430,7 @@ plot_feature_comparison(real_train_data, synth_data, 'flow_duration', 'Duration'
 original_report = ProfileReport(real_train_data, title='Original Data', minimal=True)
 resampled_report = ProfileReport(synth_data, title='Resampled Data', minimal=True)
 comparison_report = original_report.compare(resampled_report)
-comparison_report.to_file('./GAN_analysis/profile_reports/cwgangp_original_vs_synth.html')
+comparison_report.to_file(f'./GAN_analysis/profile_reports/wgangp_original_vs_synth_{timestamp_experiment}.html')
 
 #########################################################
 #         Saving Metrics and Results                     #
@@ -412,15 +438,13 @@ comparison_report.to_file('./GAN_analysis/profile_reports/cwgangp_original_vs_sy
 
 
 def save_results(model_name,  training_time_, generation_time_):
-    # Get the current timestamp
-    timestamp = time.strftime("%Y%m%d%H%M%S")
 
     # Directory to save classification report text files
-    report_dir = "classification_report_text_results"
+    report_dir = "synth_data_reports"
     os.makedirs(report_dir, exist_ok=True)
 
     # Format the filenames to include the model name and type of dataset
-    filename = f"{model_name}_train_report{timestamp}.txt"
+    filename = f"{model_name}_train_report_{timestamp_experiment}.txt"
 
     # Combine reports with accuracy, confusion matrix, training and evaluation times for imbalanced dataset
     imbalanced_report = {
@@ -436,7 +460,7 @@ def save_results(model_name,  training_time_, generation_time_):
     print("GAN reports saved successfully.")
 
 
-save_results('cwgangp', generation_time, training_time)
+save_results('wgangp', training_time, generation_time)
 
 # Save the synthetic data to a CSV file
-synth_data.to_csv('./GAN_analysis/results/synthetic_data.csv', index=False)
+synth_data.to_csv(f'./GAN_analysis/results/synthetic_data_wgangp_{timestamp_experiment}.csv', index=False)
