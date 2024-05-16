@@ -90,12 +90,12 @@ training_data_sets = csv_filepaths
 
 # Mapping Features
 num_cols = [
-    'flow_duration', 'Header_Length',  'Duration',
+    'flow_duration', 'Header_Length', 'Duration',
     'Rate', 'Srate', 'ack_count', 'syn_count',
     'fin_count', 'urg_count', 'rst_count', 'Tot sum',
     'Min', 'Max', 'AVG', 'Std', 'Tot size', 'IAT', 'Number',
     'Magnitue', 'Radius', 'Covariance', 'Variance', 'Weight',
-    ]
+]
 
 cat_cols = [
     'Protocol Type', 'Drate', 'fin_flag_number', 'syn_flag_number', 'rst_flag_number',
@@ -103,7 +103,7 @@ cat_cols = [
     'cwr_flag_number', 'HTTP', 'HTTPS', 'DNS', 'Telnet',
     'SMTP', 'SSH', 'IRC', 'TCP', 'UDP', 'DHCP', 'ARP',
     'ICMP', 'IPv', 'LLC',
-    ]
+]
 
 # Mapping Labels
 dict_7classes = {'DDoS-RSTFINFlood': 'DDoS', 'DDoS-PSHACK_Flood': 'DDoS', 'DDoS-SYN_Flood': 'DDoS',
@@ -235,23 +235,37 @@ beta_2 = 0.9
 
 # neurons and layers for each sub model
 generator_layers = [32, 16, 8]
-critic_layers = [32, 16, 8]
+critic_layers = [32]
 
 # values for training settings
 log_step = 10
 label_amount = 34
-epochs = 0 + 1
+epochs = 100 + 1
 learning_rate = 5e-4
 models_dir = 'GAN_analysis/cache'
 
 ctgan_args = ModelParameters(batch_size=batch_size,
                              lr=learning_rate,
-                             betas=(beta_1, beta_2))
+                             betas=(beta_1, beta_2),
+                             layers_dim=dim,
+                             noise_dim=noise_dim,
+                             n_cols=dim,
+                             n_features=dim,
+                             generator_dims=generator_layers,
+                             critic_dims=critic_layers,
+                             latent_dim=dim,
+                             )
 
 # Init the CTGAN
 synth = RegularSynthesizer(modelname='ctgan', model_parameters=ctgan_args)
 
-train_args = TrainParameters(epochs=epochs)
+train_args = TrainParameters(cache_prefix='cgan_cyberAttack',
+                             label_dim=label_amount,
+                             epochs=epochs,
+                             sample_interval=log_step,
+                             log_frequency=True,
+                             labels=labels_tuple,
+                             )
 
 prep_real_train_data, prep_labels = synth._prep_fit(data=real_train_data, label_cols=['label'], num_cols=num_cols
                                                     , cat_cols=cat_cols)
@@ -286,7 +300,7 @@ synth.save('./GAN_models/cyberattack_cwgangp_model.pkl')
 #########################################################
 
 # Load the GAN Model
-synth = RegularSynthesizer.load('./GAN_models/cyberattack_ctgan_model.pkl')
+synth = RegularSynthesizer.load(f'./scalar_models/MinMaxScaler_{timestamp_experiment}.pkl')
 synth.output_dimensions()
 
 samples_per_class = 1000  # Adjust this as needed
@@ -327,7 +341,7 @@ print("Finished Generating...\n")
 #               Postprocessing and Analysis             #
 #########################################################
 
-scaler = joblib.load('../scalar_models/MinMaxScaler_.pkl')
+scaler = joblib.load(f'./scalar_models/MinMaxScaler_{timestamp_experiment}.pkl')
 
 # find the amount of labels in the synth data
 unique_labels = synth_data['label'].nunique()
@@ -384,6 +398,7 @@ real_train_data['label'] = label_encoder.inverse_transform(real_train_data['labe
 
 # Print some of the decoded data
 print(synth_data.head(), "\n")
+
 
 #########################################################
 #         Making Graphs, Documents, and Diagrams        #
@@ -442,13 +457,13 @@ resampled_report = ProfileReport(synth_data, title='Resampled Data', minimal=Tru
 comparison_report = original_report.compare(resampled_report)
 comparison_report.to_file(f'./GAN_analysis/profile_reports/ctgan_original_vs_synth_{timestamp_experiment}.html')
 
+
 #########################################################
 #         Saving Metrics and Results                    #
 #########################################################
 
 
-def save_results(model_name,  training_time_, generation_time_):
-
+def save_results(model_name, training_time_, generation_time_):
     # Directory to save classification report text files
     report_dir = "synth_data_reports"
     os.makedirs(report_dir, exist_ok=True)
@@ -470,7 +485,7 @@ def save_results(model_name,  training_time_, generation_time_):
     print("GAN reports saved successfully.")
 
 
-save_results('cwgangp', training_time, generation_time)
+save_results('ctgan', training_time, generation_time)
 
 # Save the synthetic data to a CSV file
 synth_data.to_csv(f'./GAN_analysis/results/synthetic_data_ctgan_{timestamp_experiment}.csv', index=False)

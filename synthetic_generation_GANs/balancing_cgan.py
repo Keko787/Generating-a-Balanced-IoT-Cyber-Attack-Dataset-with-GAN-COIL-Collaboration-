@@ -140,7 +140,7 @@ for data_set in training_data_sets:
     real_train_data = pd.concat([real_train_data, df])
 
 # Relabel the 'label' column using dict_7classes
-# real_train_data['label'] = real_train_data['label'].map(dict_7classes)
+#real_train_data['label'] = real_train_data['label'].map(dict_7classes)
 
 # Relabel the 'label' column using dict_2classes
 # real_train_data['label'] = real_train_data['label'].map(dict_2classes)
@@ -148,7 +148,6 @@ for data_set in training_data_sets:
 #########################################################
 #    Preprocessing Data                                 #
 #########################################################
-scaler = joblib.load('../scalar_models/MinMaxScaler_.pkl')
 
 # Shuffle data
 real_train_data = shuffle(real_train_data, random_state=1)
@@ -172,7 +171,7 @@ scaler.fit(real_train_data[num_cols])
 
 # Save the Scaler for use in other files
 # joblib.dump(scaler, 'RobustScaler_.pkl')
-joblib.dump(scaler, './scalar_models/MinMaxScaler_.pkl')
+joblib.dump(scaler, f'./scalar_models/MinMaxScaler_{timestamp_experiment}.pkl')
 # joblib.dump(scaler, 'PowerTransformer_.pkl')
 
 # Scale the features in the real train dataframe
@@ -236,12 +235,12 @@ beta_2 = 0.9
 
 # neurons and layers for each sub model
 generator_layers = [32, 16, 8]
-critic_layers = [32, 16, 8]
+critic_layers = [32]
 
 # values for training settings
 log_step = 10
 label_amount = 34
-epochs = 0 + 1
+epochs = 25 + 1
 learning_rate = 5e-4
 models_dir = './GAN_analysis/cache'
 
@@ -252,7 +251,6 @@ gan_args = ModelParameters(batch_size=batch_size,
                            layers_dim=dim,
                            noise_dim=noise_dim,
                            n_cols=dim,
-                           condition=True,
                            n_features=dim,
                            generator_dims=generator_layers,
                            critic_dims=critic_layers,
@@ -301,13 +299,13 @@ except subprocess.TimeoutExpired:
 print("Training Over...\n")
 
 # Saving the synthesizer
-synth.save('./GAN_models/cyberattack_cgan_model.pkl')
+synth.save('./GAN_models/cyberattack_cgan_model_1_specific.pkl')
 
 #########################################################
 #    Loading GAN and Generating Samples       #
 #########################################################
 
-synth = RegularSynthesizer.load('./GAN_models/cyberattack_cgan_model.pkl')
+synth = RegularSynthesizer.load('./GAN_models/cyberattack_cgan_model_1_specific.pkl')
 
 samples_per_class = 1000  # Adjust this as needed
 
@@ -489,7 +487,7 @@ def save_results(model_name,  training_time_, generation_time_):
     print("GAN reports saved successfully.")
 
 
-save_results('cwgangp', training_time, generation_time)
+save_results('cgan', training_time, generation_time)
 
 # Save the synthetic data to a CSV file
 synth_data.to_csv(f'./GAN_analysis/results/synthetic_data_cgan_{timestamp_experiment}.csv', index=False)

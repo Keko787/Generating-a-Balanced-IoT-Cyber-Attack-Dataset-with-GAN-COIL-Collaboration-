@@ -171,7 +171,7 @@ scaler.fit(real_train_data[num_cols])
 
 # Save the Scaler for use in other files
 # joblib.dump(scaler, 'RobustScaler_.pkl')
-joblib.dump(scaler, './scalar_models/MinMaxScaler_.pkl')
+joblib.dump(scaler, f'./scalar_models/MinMaxScaler_{timestamp_experiment}.pkl')
 # joblib.dump(scaler, 'PowerTransformer_.pkl')
 
 # Scale the features in the real train dataframe
@@ -235,12 +235,12 @@ beta_2 = 0.9
 
 # neurons and layers for each sub model
 generator_layers = [32, 16, 8]
-critic_layers = [32, 16, 8]
+critic_layers = [32]
 
 # values for training settings
 log_step = 10
 label_amount = 34
-epochs = 0 + 1
+epochs = 100 + 1
 learning_rate = 5e-4
 models_dir = './GAN_analysis/cache'
 
@@ -317,7 +317,7 @@ print("Finished Generating...\n")
 #               Postprocessing and Analysis             #
 #########################################################
 
-scaler = joblib.load('../scalar_models/MinMaxScaler_.pkl')
+scaler = joblib.load(f'./scalar_models/MinMaxScaler_{timestamp_experiment}.pkl')
 
 # find the amount of labels in the synth data
 unique_labels = synth_data['label'].nunique()

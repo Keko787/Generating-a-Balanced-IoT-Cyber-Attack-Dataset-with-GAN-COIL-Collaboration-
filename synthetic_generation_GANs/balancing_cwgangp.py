@@ -140,7 +140,7 @@ for data_set in training_data_sets:
     real_train_data = pd.concat([real_train_data, df])
 
 # Relabel the 'label' column using dict_7classes
-# real_train_data['label'] = real_train_data['label'].map(dict_7classes)
+real_train_data['label'] = real_train_data['label'].map(dict_7classes)
 
 # Relabel the 'label' column using dict_2classes
 # real_train_data['label'] = real_train_data['label'].map(dict_2classes)
@@ -171,7 +171,7 @@ scaler.fit(real_train_data[num_cols])
 
 # Save the Scaler for use in other files
 # joblib.dump(scaler, 'RobustScaler_.pkl')
-joblib.dump(scaler, './scalar_models/MinMaxScaler_.pkl')
+joblib.dump(scaler, f'./scalar_models/MinMaxScaler_{timestamp_experiment}.pkl')
 # joblib.dump(scaler, 'PowerTransformer_.pkl')
 
 # Scale the features in the real train dataframe
@@ -235,12 +235,12 @@ beta_2 = 0.9
 
 # neurons and layers for each sub model
 generator_layers = [32, 16, 8]
-critic_layers = [32, 16, 8]
+critic_layers = [32]
 
 # values for training settings
 log_step = 10
 label_amount = 34
-epochs = 50 + 1
+epochs = 100 + 1
 learning_rate = 5e-4
 models_dir = './GAN_analysis/cache'
 
@@ -301,14 +301,14 @@ except subprocess.TimeoutExpired:
 print("Training Over...\n")
 
 # Saving the GAN Model
-synth.save('./GAN_models/cyberattack_cwgangp_model_2.pkl')
+synth.save('./GAN_models/cyberattack_cwgangp_model_2_general.pkl')
 
 #########################################################
 #    Loading GAN and Generating Samples                 #
 #########################################################
 
 # Load the GAN Model
-synth = RegularSynthesizer.load('./GAN_models/cyberattack_cwgangp_model_2.pkl')
+synth = RegularSynthesizer.load('GAN_models/cyberattack_cwgangp_model_2_general.pkl')
 
 samples_per_class = 1000  # Adjust this as needed
 
@@ -348,7 +348,7 @@ print("Finished Generating...\n")
 #########################################################
 #               Postprocessing and Analysis             #
 #########################################################
-scaler = joblib.load('./scalar_models/MinMaxScaler_.pkl')
+scaler = joblib.load(f'./scalar_models/MinMaxScaler_{timestamp_experiment}.pkl')
 
 # find the amount of labels in the synth data
 unique_labels = synth_data['label'].nunique()
@@ -407,7 +407,50 @@ real_train_data['label'] = label_encoder.inverse_transform(real_train_data['labe
 print(synth_data.head(), "\n")
 
 #########################################################
-#         Making Graphs, Documents, and Diagrams        #
+#         Saving Metrics and Results                     #
+#########################################################
+
+print(f"Training time for Model: {training_time:.20f} seconds")
+print(f"Generation time for Balanced Synthetic Dataset: {generation_time:.20f} seconds")
+
+
+def save_results(model_name,  training_time_, generation_time_):
+
+    # Directory to save classification report text files
+    report_dir = "synth_data_reports"
+    os.makedirs(report_dir, exist_ok=True)
+
+    # Format the filenames to include the model name and type of dataset
+    filename = f"{model_name}_train_report_{timestamp_experiment}.txt"
+
+    # Combine reports with accuracy, confusion matrix, training and evaluation times for imbalanced dataset
+    imbalanced_report = {
+        "training_time_seconds": training_time_,
+        "generation_time_seconds": generation_time_
+    }
+
+    # Save combined report for the imbalanced dataset
+    report_filename = os.path.join(report_dir, filename)
+    with open(report_filename, "w") as report_file:
+        json.dump(imbalanced_report, report_file, indent=4)
+
+    print("GAN reports saved successfully.")
+
+
+save_results('cwgangp', training_time, generation_time)
+
+# Save the synthetic data to a CSV file
+synth_data.to_csv(f'./GAN_analysis/results/synthetic_data_cwgangp_{timestamp_experiment}.csv', index=False)
+
+# Provide a Report of each feature and other stats from Ydata profiling
+original_report = ProfileReport(real_train_data, title='Original Data', minimal=True)
+resampled_report = ProfileReport(synth_data, title='Resampled Data', minimal=True)
+comparison_report = original_report.compare(resampled_report)
+
+comparison_report.to_file(f'./GAN_analysis/profile_reports/cwgangp_original_vs_synth_{timestamp_experiment}.html')
+
+#########################################################
+#         Making Graphs and Diagrams        #
 #########################################################
 
 
@@ -447,9 +490,6 @@ def plot_feature_comparison(real_data, synth_data, feature1, feature2):
     plt.show()
 
 
-print(f"Training time for Model: {training_time:.20f} seconds")
-print(f"Generation time for Balanced Synthetic Dataset: {generation_time:.20f} seconds")
-
 # Plot class distribution for both real and synthetic data
 plot_class_distribution(real_train_data, 'Real Data Class Distribution')
 plot_class_distribution(synth_data, 'Synthetic Data Class Distribution')
@@ -457,42 +497,3 @@ plot_class_distribution(synth_data, 'Synthetic Data Class Distribution')
 # Plot feature comparisons (adjust 'feature1' and 'feature2' to your dataset's features)
 plot_feature_comparison(real_train_data, synth_data, 'flow_duration', 'Duration')
 
-# Provide a Report of each feature and other stats from Ydata profiling
-original_report = ProfileReport(real_train_data, title='Original Data', minimal=True)
-resampled_report = ProfileReport(synth_data, title='Resampled Data', minimal=True)
-comparison_report = original_report.compare(resampled_report)
-
-comparison_report.to_file(f'./GAN_analysis/profile_reports/cwgangp_original_vs_synth_{timestamp_experiment}.html')
-
-#########################################################
-#         Saving Metrics and Results                     #
-#########################################################
-
-
-def save_results(model_name,  training_time_, generation_time_):
-
-    # Directory to save classification report text files
-    report_dir = "synth_data_reports"
-    os.makedirs(report_dir, exist_ok=True)
-
-    # Format the filenames to include the model name and type of dataset
-    filename = f"{model_name}_train_report_{timestamp_experiment}.txt"
-
-    # Combine reports with accuracy, confusion matrix, training and evaluation times for imbalanced dataset
-    imbalanced_report = {
-        "training_time_seconds": training_time_,
-        "generation_time_seconds": generation_time_
-    }
-
-    # Save combined report for the imbalanced dataset
-    report_filename = os.path.join(report_dir, filename)
-    with open(report_filename, "w") as report_file:
-        json.dump(imbalanced_report, report_file, indent=4)
-
-    print("GAN reports saved successfully.")
-
-
-save_results('cwgangp', training_time, generation_time)
-
-# Save the synthetic data to a CSV file
-synth_data.to_csv(f'./GAN_analysis/results/synthetic_data_cwgangp_{timestamp_experiment}.csv', index=False)

@@ -54,6 +54,7 @@ def log_hardware(interval=10, log_interval=3, log_file_name='hardware_usage_repo
         }
         log_data['gpus'].append(gpu_data)
 
+        #debugger
         print(log_data, "\n")
 
         # Increment the cycle count
