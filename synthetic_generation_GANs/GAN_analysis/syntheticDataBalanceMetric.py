@@ -210,7 +210,7 @@ print(synth_data.head(), "\n")
 #               Postprocessing            #
 #########################################################
 
-scaler = joblib.load('../scalar_models/MinMaxScaler_.pkl')
+scaler = joblib.load('../scalar_models/MinMaxScaler_ctGANGeneral.pkl')
 
 # find the amount of labels in the synth data
 unique_labels = synth_data['label'].unique()

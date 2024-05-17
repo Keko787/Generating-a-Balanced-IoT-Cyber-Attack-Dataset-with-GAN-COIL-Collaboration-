@@ -143,7 +143,7 @@ for data_set in training_data_sets:
 #real_train_data['label'] = real_train_data['label'].map(dict_7classes)
 
 # Relabel the 'label' column using dict_2classes
-# real_train_data['label'] = real_train_data['label'].map(dict_2classes)
+real_train_data['label'] = real_train_data['label'].map(dict_2classes)
 
 #########################################################
 #    Preprocessing Data                                 #
@@ -299,13 +299,13 @@ except subprocess.TimeoutExpired:
 print("Training Over...\n")
 
 # Saving the synthesizer
-synth.save('./GAN_models/cyberattack_cgan_model_1_specific.pkl')
+synth.save('./GAN_models/cyberattack_cgan_model_1_binary.pkl')
 
 #########################################################
 #    Loading GAN and Generating Samples       #
 #########################################################
 
-synth = RegularSynthesizer.load('./GAN_models/cyberattack_cgan_model_1_specific.pkl')
+synth = RegularSynthesizer.load('./GAN_models/cyberattack_cgan_model_1_binary.pkl')
 
 samples_per_class = 1000  # Adjust this as needed
 

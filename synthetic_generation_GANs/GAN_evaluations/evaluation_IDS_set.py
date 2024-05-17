@@ -71,7 +71,7 @@ print("TensorFlow version:", tf.__version__)
 #    Loading GAN Model and Generating Data              #
 #########################################################
 # loading GAN
-synth = RegularSynthesizer.load('../GAN_models/cyberattack_cwgangp_model_full_2.pkl')
+synth = RegularSynthesizer.load('../GAN_models/cyberattack_cwgangp_model_2_specific.pkl')
 
 # specifying the samples per class
 samples_per_class = 1000  # Adjust this as needed
@@ -289,7 +289,7 @@ for label in unique_labels_synth:
 
 # Load up Scaler from GAN Training for Features
 #scaler = joblib.load('RobustScaler_.pkl')
-scaler = joblib.load('../scalar_models/MinMaxScaler_.pkl')
+scaler = joblib.load('../scalar_models/MinMaxScalerCWS_20240515185435.pkl')
 # scaler = joblib.load('PowerTransformer_.pkl')
 
 # train the scalar on train data features
@@ -372,7 +372,7 @@ y_test_real = sampled_real_test_data['label']               # Real Labels
 #########################################################
 #    Setting up IDS Classifier Model  #
 #########################################################
-evaluator_type = 'KNearestNeighbor'
+evaluator_type = 'RandomForest'
 # Classification types: 33+1, 7+1, 1+1
 _class = '33+1'
 
@@ -469,6 +469,51 @@ conf_matrix = confusion_matrix(y_test_real, y_eval_pred)
 print("Confusion Matrix:")
 print(conf_matrix)
 
+
+#########################################################
+#         Saving Metrics and Results                     #
+#########################################################
+
+
+def save_results(model_name, generation_time_, training_time, testing_time, accuracy, class_report, conf_matrix):
+    # Get the current timestamp
+    timestamp = time.strftime("%Y%m%d%H%M%S")
+
+    # Directory to save classification report text files
+    report_dir = "./synth_data_reports"
+    os.makedirs(report_dir, exist_ok=True)
+
+    # Format the filenames to include the model name and type of dataset
+    filename = f"{model_name}_{evaluator_type}_report{timestamp}.txt"
+
+    # Convert the confusion matrix to a list
+    conf_matrix_list = conf_matrix.tolist()
+
+    # Combine reports with accuracy, confusion matrix, training and evaluation times for imbalanced dataset
+    imbalanced_report = {
+        "generation_time_seconds": generation_time_,
+        "training_time_seconds": training_time,
+        "testing_time_seconds": testing_time,
+        "accuracy": accuracy,
+        "class_report": class_report,
+        "conf_matrix": conf_matrix_list
+    }
+
+    # Save combined report for the imbalanced dataset
+    report_filename = os.path.join(report_dir, filename)
+    with open(report_filename, "w") as report_file:
+        json.dump(imbalanced_report, report_file, indent=4)
+
+    synth_train_data.to_csv(f'../results/synthetic_EVALUATION_{model_name}_{evaluator_type}_{timestamp}.csv', index=False)
+    print("GAN reports saved successfully.")
+
+
+
+save_results(f'cwgangp', generation_time, training_time, testing_time, accuracy, class_report, conf_matrix)
+
+# Save the synthetic data to a CSV file
+
+
 #########################################################
 # Graphs and Diagrams                                   #
 #########################################################
@@ -498,41 +543,4 @@ print(f"Generation time for Balanced Synthetic Dataset: {generation_time:.20f} s
 print(f"Training time for Model: {training_time:.20f} seconds")
 print(f"Evaluation time for Real Dataset: {testing_time:.20f} seconds")
 
-#########################################################
-#         Saving Metrics and Results                     #
-#########################################################
 
-
-def save_results(model_name, generation_time_, training_time, testing_time, accuracy, class_report, conf_matrix):
-    # Get the current timestamp
-    timestamp = time.strftime("%Y%m%d%H%M%S")
-
-    # Directory to save classification report text files
-    report_dir = "./synth_data_reports"
-    os.makedirs(report_dir, exist_ok=True)
-
-    # Format the filenames to include the model name and type of dataset
-    filename = f"{model_name}_{evaluator_type}_report{timestamp}.txt"
-
-    # Combine reports with accuracy, confusion matrix, training and evaluation times for imbalanced dataset
-    imbalanced_report = {
-        "generation_time_seconds": generation_time_,
-        "training_time_seconds": training_time,
-        "testing_time_seconds": testing_time,
-        "accuracy": accuracy,
-        "class_report": class_report,
-        "conf_matrix": conf_matrix
-    }
-
-    # Save combined report for the imbalanced dataset
-    report_filename = os.path.join(report_dir, filename)
-    with open(report_filename, "w") as report_file:
-        json.dump(imbalanced_report, report_file, indent=4)
-
-    print("GAN reports saved successfully.")
-
-
-save_results(f'cwgangp', generation_time, training_time, testing_time, accuracy, class_report, conf_matrix)
-
-# Save the synthetic data to a CSV file
-synth_train_data.to_csv('./results/synthetic_EVALUATION_data.csv', index=False)

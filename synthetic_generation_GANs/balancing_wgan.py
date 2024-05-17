@@ -102,7 +102,7 @@ cat_cols = [
     'psh_flag_number', 'ack_flag_number', 'ece_flag_number',
     'cwr_flag_number', 'HTTP', 'HTTPS', 'DNS', 'Telnet',
     'SMTP', 'SSH', 'IRC', 'TCP', 'UDP', 'DHCP', 'ARP',
-    'ICMP', 'IPv', 'LLC',
+    'ICMP', 'IPv', 'LLC', 'label'
     ]
 
 # Mapping Labels
@@ -140,10 +140,10 @@ for data_set in training_data_sets:
     real_train_data = pd.concat([real_train_data, df])
 
 # Relabel the 'label' column using dict_7classes
-# real_train_data['label'] = real_train_data['label'].map(dict_7classes)
+#real_train_data['label'] = real_train_data['label'].map(dict_7classes)
 
 # Relabel the 'label' column using dict_2classes
-# real_train_data['label'] = real_train_data['label'].map(dict_2classes)
+real_train_data['label'] = real_train_data['label'].map(dict_2classes)
 
 #########################################################
 #    Preprocessing Data                                 #
@@ -254,9 +254,6 @@ gan_args = ModelParameters(batch_size=batch_size,
 # Init the GAN model
 synth = RegularSynthesizer(modelname='wgangp', model_parameters=gan_args, n_critic=10)
 
-prep_real_train_data, prep_labels = synth._prep_fit(data=real_train_data, label_cols=['label'], num_cols=num_cols
-                                                    , cat_cols=cat_cols)
-
 train_args = TrainParameters(epochs=epochs,
                              sample_interval=log_step)
 
@@ -269,7 +266,7 @@ proc = subprocess.Popen(['python', './GAN_analysis/hardwareAnalyzer.py'])
 start_time_train = time.time()
 
 # Training the Conditional GAN
-synth.fit(data=real_train_data, label_cols=['label'], train_arguments=train_args, num_cols=num_cols, cat_cols=cat_cols)
+synth.fit(data=real_train_data, train_arguments=train_args, num_cols=num_cols, cat_cols=cat_cols)
 
 # End the training timer
 training_time = time.time() - start_time_train
@@ -283,13 +280,13 @@ except subprocess.TimeoutExpired:
 print("Training Over...\n")
 
 # Save the GAN model
-synth.save('./GAN_models/attack_wgangp_model.pkl')
+synth.save('./GAN_models/attack_wgangp_model_binary.pkl')
 
 #########################################################
 #    Loading GAN and Generating Samples       #
 #########################################################
 # Loading model
-synth = RegularSynthesizer.load('./GAN_models/attack_wgangp_model.pkl')
+synth = RegularSynthesizer.load('./GAN_models/attack_wgangp_model_binary.pkl')
 
 # start the hardware logging
 proc = subprocess.Popen(['python', './GAN_analysis/hardwareAnalyzer.py'])
@@ -321,6 +318,7 @@ scaler = joblib.load(f'./scalar_models/MinMaxScaler_{timestamp_experiment}.pkl')
 
 # find the amount of labels in the synth data
 unique_labels = synth_data['label'].nunique()
+unique_labels_list = real_train_data['label'].unique()
 
 # Print the number of unique labels
 print(f"There are {unique_labels} unique labels in the dataset.")
@@ -331,17 +329,15 @@ print(class_counts, "\n")
 
 # prove that the scaled data is proper by printing each instance
 print("Synthetic Data (SCALED):")
-for label, code in class_codes.items():
-    # Print the first instance of each class
-    print(f"First instance of {label} (code {code}):")
-    print(synth_data[synth_data['label'] == code].iloc[0])
+for label in unique_labels_list:
+    print(f"First instance of {label}:")
+    print(real_train_data[real_train_data['label'] == label].iloc[0])
 print(synth_data.head(), "\n")
 
 print("real train data Data (SCALED):")
-for label, code in class_codes.items():
-    # Print the first instance of each class
-    print(f"First instance of {label} (code {code}):")
-    print(real_train_data[real_train_data['label'] == code].iloc[0])
+for label in unique_labels_list:
+    print(f"First instance of {label}:")
+    print(real_train_data[real_train_data['label'] == label].iloc[0])
 print(real_train_data.head(), "\n")
 
 # inverse the scale on synthetic data
@@ -352,17 +348,15 @@ real_train_data[num_cols] = scaler.inverse_transform(real_train_data[num_cols])
 
 # prove that the unscaled data is proper by printing each instance
 print("Synthetic Data (UNSCALED):")
-for label, code in class_codes.items():
-    # Print the first instance of each class
-    print(f"First instance of {label} (code {code}):")
-    print(synth_data[synth_data['label'] == code].iloc[0])
+for label in unique_labels_list:
+    print(f"First instance of {label}:")
+    print(real_train_data[real_train_data['label'] == label].iloc[0])
 print(synth_data.head(), "\n")
 
 print("real train data Data (UNSCALED):")
-for label, code in class_codes.items():
-    # Print the first instance of each class
-    print(f"First instance of {label} (code {code}):")
-    print(real_train_data[real_train_data['label'] == code].iloc[0])
+for label in unique_labels_list:
+    print(f"First instance of {label}:")
+    print(real_train_data[real_train_data['label'] == label].iloc[0])
 print(real_train_data.head(), "\n")
 
 # Decode the synthetic data labels

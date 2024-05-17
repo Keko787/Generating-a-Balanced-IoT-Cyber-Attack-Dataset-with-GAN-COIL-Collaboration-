@@ -1,0 +1,19 @@
+[
+    {
+        "Log": 29,
+        "timestamp": "2024-05-16T20:02:26.449847",
+        "cpu_usage_percent": 0.2,
+        "memory_usage_percent": 3.2,
+        "memory_total_GB": 31.24066925048828,
+        "gpus": [
+            {
+                "id": 0,
+                "name": "NVIDIA GeForce RTX 3080",
+                "load_percent": 14.000000000000002,
+                "memory_used_MB": 743.0,
+                "memory_total_MB": 10240.0,
+                "temperature_C": 39.0
+            }
+        ]
+    }
+]

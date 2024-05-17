@@ -280,7 +280,7 @@ for label in unique_labels_synth:
 
 # Load up Scaler from GAN Training for Features
 #scaler = joblib.load('RobustScaler_.pkl')
-scaler = joblib.load('../scalar_models/MinMaxScaler_.pkl')
+scaler = joblib.load('../scalar_models/MinMaxScaler_ctGANGeneral.pkl')
 # scaler = joblib.load('PowerTransformer_.pkl')
 
 # train the scalar on train data features
