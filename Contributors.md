@@ -1,4 +1,4 @@
-# CEN 3078 Class Project: Balancing GAN Algorithm for Cyberattack Datasets
+# CEN 3078 COIL PROJECT: Balancing GAN Algorithm for Cyberattack Datasets
 
 ## Project Manager:
 - Kevin Kostage ([Keko787](https://github.com/Keko787))
