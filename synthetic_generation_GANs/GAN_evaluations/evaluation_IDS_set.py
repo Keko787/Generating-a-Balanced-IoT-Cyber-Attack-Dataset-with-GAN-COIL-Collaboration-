@@ -372,7 +372,7 @@ y_test_real = sampled_real_test_data['label']               # Real Labels
 #########################################################
 #    Setting up IDS Classifier Model  #
 #########################################################
-evaluator_type = 'RandomForest'
+evaluator_type = 'DeepNeuralNetwork'
 # Classification types: 33+1, 7+1, 1+1
 _class = '33+1'
 
