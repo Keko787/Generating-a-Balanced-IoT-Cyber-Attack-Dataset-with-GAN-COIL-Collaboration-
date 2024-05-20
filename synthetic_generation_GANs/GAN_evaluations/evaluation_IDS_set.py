@@ -75,11 +75,11 @@ print("TensorFlow version:", tf.__version__)
 ########## inputs #################
 
 synth_categories = ['CWGANGP', 'CGAN', 'CTGAN', 'WGANGP']
-model = 'CWGANGP'
+model = "CWGANGP"
 evalautor_types = ['XGBoost', 'LogisticRegression', 'Perceptron', 'AdaBoost', 'RandomForest', 'DeepNeuralNetwork', 'KNearestNeighbor']
-evaluator_type = 'DeepNeuralNetwork'
+evaluator_type = "DeepNeuralNetwork"
 label_classes = ['33+1', '7+1', '1+1']
-labelClass = '33+1'
+labelClass = "33+1"
 
 
 #########################
@@ -465,8 +465,12 @@ print("Finished Testing...\n")
 #########################################################
 # open the evaluator results file  #
 #########################################################
+# Directory to save classification report text files
+report_dir = "./synth_data_reports"
+os.makedirs(report_dir, exist_ok=True)
+
 try:
-    df_metrics = pd.read_json(path_or_buf= '/synthetic_evaluator_metrics.json', orient='index')
+    df_metrics = pd.read_json(path_or_buf=report_dir + '/synth_evaluator_metrics.json', orient='index')
 
 except FileNotFoundError:
     df_metrics = pd.DataFrame(
@@ -503,10 +507,6 @@ def save_results(evaluator_metrics):
     # Get the current timestamp
     timestamp = time.strftime("%Y%m%d%H%M%S")
 
-    # Directory to save classification report text files
-    report_dir = "./synth_data_reports"
-    os.makedirs(report_dir, exist_ok=True)
-
     # Debugging: Print the column names and evaluator_metrics list
     print("DataFrame columns:", df_metrics.columns)
     print("Evaluator metrics:", evaluator_metrics)
@@ -517,6 +517,7 @@ def save_results(evaluator_metrics):
                                 (df_metrics['Evaluator'] == evaluator_type)]
 
     if update_row.empty:
+        print("No existing record found. Adding new entry.")
         # No previous record
         df_metrics.loc[len(df_metrics.index)] = evaluator_metrics
 
@@ -524,14 +525,14 @@ def save_results(evaluator_metrics):
         # display(df_metrics.loc[len(df_metrics.index) - 1])
 
     else:
-        # Previous record exists
-        update_row = evaluator_metrics
+        # Previous record exists, update it
+        print("Existing record found. Updating entry.")
+        df_metrics.loc[update_row.index, :] = evaluator_metrics
 
         print(f'{evaluator_type} / {model} / {labelClass} Metrics')
-        # display(df_metrics.loc[(df_metrics['Sampler'] == sampler) &
-        #                        (df_metrics['Label Classes'] == label_class) &
+        # display(df_metrics.loc[(df_metrics['Synth'] == model) &
+        #                        (df_metrics['Label Classes'] == labelClass) &
         #                        (df_metrics['Evaluator'] == evaluator_type)])
-
 
     # Save combined report
     df_metrics['Synth'] = pd.Categorical(df_metrics['Synth'], categories=synth_categories)
@@ -545,12 +546,8 @@ def save_results(evaluator_metrics):
     synth_train_data.to_csv(f'../results/synthetic_EVALUATION_{model}_{evaluator_type}_{labelClass}_{timestamp}.csv', index=False)
     print("GAN reports saved successfully.")
 
-
-
+# Call save_results with the evaluator_metrics list
 save_results(evaluator_metrics)
-
-# Save the synthetic data to a CSV file
-
 
 #########################################################
 # Graphs and Diagrams                                   #
@@ -574,8 +571,8 @@ label_names = [label_mapping[label] for label in sorted(label_mapping)]
 # ax.set_xlabel('Predicted labels', fontsize=12)
 # ax.set_ylabel('True labels', fontsize=12)
 # ax.set_title(f'{evaluator_type} Evaluation', fontsize=14)
-
-plt.show()
+#
+# plt.show()
 
 print(f"Generation time for Balanced Synthetic Dataset: {generation_time:.20f} seconds")
 print(f"Training time for Model: {training_time:.20f} seconds")
