@@ -491,7 +491,7 @@ precision = precision_score(y_test_real, y_eval_pred, average='macro', zero_divi
 recall = recall_score(y_test_real, y_eval_pred, average='macro')
 f1 = f1_score(y_test_real, y_eval_pred, average='macro')
 
-evaluator_metrics = [model, evaluator_type, labelClass, generation_time, training_time, testing_time, accuracy,
+evaluator_metrics = [model, labelClass, evaluator_type, testing_time, accuracy,
                      precision, recall, f1]
 
 #########################################################
@@ -506,6 +506,10 @@ def save_results(evaluator_metrics):
     # Directory to save classification report text files
     report_dir = "./synth_data_reports"
     os.makedirs(report_dir, exist_ok=True)
+
+    # Debugging: Print the column names and evaluator_metrics list
+    print("DataFrame columns:", df_metrics.columns)
+    print("Evaluator metrics:", evaluator_metrics)
 
     # Add metrics to dataframe and display
     update_row = df_metrics.loc[(df_metrics['Synth'] == model) &
@@ -538,7 +542,6 @@ def save_results(evaluator_metrics):
 
     df_metrics.to_json(path_or_buf=report_dir + '/synth_evaluator_metrics.json', orient='index')
 
-
     synth_train_data.to_csv(f'../results/synthetic_EVALUATION_{model}_{evaluator_type}_{labelClass}_{timestamp}.csv', index=False)
     print("GAN reports saved successfully.")
 
@@ -556,21 +559,21 @@ save_results(evaluator_metrics)
 # Retrieve label mapping to show names on the confusion matrix
 label_names = [label_mapping[label] for label in sorted(label_mapping)]
 
-# Plotting the confusion matrix with label names
-fig, ax = plt.subplots(figsize=(12, 8))  # Adjust the figure size as needed
+# # Plotting the confusion matrix with label names
+# fig, ax = plt.subplots(figsize=(12, 8))  # Adjust the figure size as needed
 # sns.heatmap(conf_matrix, annot=False, fmt='d', cmap='Blues', xticklabels=label_names, yticklabels=label_names, ax=ax)
-
-# Set axis labels with rotation for x-axis labels
-ax.set_xticklabels(label_names, rotation=45, ha="right")  # Rotate x-axis labels for better visibility
-ax.set_yticklabels(label_names)
-
-# Adjust the margins and layout
-plt.tight_layout()
-
-# Setting labels and title
-ax.set_xlabel('Predicted labels', fontsize=12)
-ax.set_ylabel('True labels', fontsize=12)
-ax.set_title(f'{evaluator_type} Evaluation', fontsize=14)
+#
+# # Set axis labels with rotation for x-axis labels
+# ax.set_xticklabels(label_names, rotation=45, ha="right")  # Rotate x-axis labels for better visibility
+# ax.set_yticklabels(label_names)
+#
+# # Adjust the margins and layout
+# plt.tight_layout()
+#
+# # Setting labels and title
+# ax.set_xlabel('Predicted labels', fontsize=12)
+# ax.set_ylabel('True labels', fontsize=12)
+# ax.set_title(f'{evaluator_type} Evaluation', fontsize=14)
 
 plt.show()
 
