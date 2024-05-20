@@ -58,7 +58,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.metrics import confusion_matrix
 from sklearn.metrics import matthews_corrcoef
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score, f1_score
+from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score, precision_recall_fscore_support
 
 # Print versions and device configurations after ensuring GPU settings
 print("TensorFlow version:", tf.__version__)
@@ -70,6 +70,19 @@ print("TensorFlow version:", tf.__version__)
 #########################################################
 #    Loading GAN Model and Generating Data              #
 #########################################################
+
+
+########## inputs #################
+
+synth_categories = ['CWGANGP', 'CGAN', 'CTGAN', 'WGANGP']
+model = 'CWGANGP'
+evalautor_types = ['XGBoost', 'LogisticRegression', 'Perceptron', 'AdaBoost', 'RandomForest', 'DeepNeuralNetwork', 'KNearestNeighbor']
+evaluator_type = 'DeepNeuralNetwork'
+label_classes = ['33+1', '7+1', '1+1']
+labelClass = '33+1'
+
+
+#########################
 # loading GAN
 synth = RegularSynthesizer.load('../GAN_models/cyberattack_cwgangp_model_2_specific.pkl')
 
@@ -372,9 +385,7 @@ y_test_real = sampled_real_test_data['label']               # Real Labels
 #########################################################
 #    Setting up IDS Classifier Model  #
 #########################################################
-evaluator_type = 'DeepNeuralNetwork'
-# Classification types: 33+1, 7+1, 1+1
-_class = '33+1'
+
 
 match evaluator_type:
     case 'XGBoost':
@@ -450,6 +461,17 @@ y_eval_pred = evaluator.predict(X_test_real)
 testing_time = time.time() - start_time_test
 print("Finished Testing...\n")
 
+
+#########################################################
+# open the evaluator results file  #
+#########################################################
+try:
+    df_metrics = pd.read_json(path_or_buf= '/synthetic_evaluator_metrics.json', orient='index')
+
+except FileNotFoundError:
+    df_metrics = pd.DataFrame(
+        columns=['Synth', 'Label Classes', 'Evaluator', 'Test Duration', 'Accuracy', 'Precision', 'Recall', 'F1'])
+
 #########################################################
 # Analyze Test Results  #
 #########################################################
@@ -464,18 +486,20 @@ class_report = classification_report(y_test_real, y_eval_pred)
 print("Classification Report:")
 print(class_report)
 
-# Confusion Matrix
-conf_matrix = confusion_matrix(y_test_real, y_eval_pred)
-print("Confusion Matrix:")
-print(conf_matrix)
+# classification report
+precision = precision_score(y_test_real, y_eval_pred, average='macro', zero_division=0.0)
+recall = recall_score(y_test_real, y_eval_pred, average='macro')
+f1 = f1_score(y_test_real, y_eval_pred, average='macro')
 
+evaluator_metrics = [model, evaluator_type, labelClass, generation_time, training_time, testing_time, accuracy,
+                     precision, recall, f1]
 
 #########################################################
 #         Saving Metrics and Results                     #
 #########################################################
 
 
-def save_results(model_name, generation_time_, training_time, testing_time, accuracy, class_report, conf_matrix):
+def save_results(evaluator_metrics):
     # Get the current timestamp
     timestamp = time.strftime("%Y%m%d%H%M%S")
 
@@ -483,33 +507,44 @@ def save_results(model_name, generation_time_, training_time, testing_time, accu
     report_dir = "./synth_data_reports"
     os.makedirs(report_dir, exist_ok=True)
 
-    # Format the filenames to include the model name and type of dataset
-    filename = f"{model_name}_{evaluator_type}_report{timestamp}.txt"
+    # Add metrics to dataframe and display
+    update_row = df_metrics.loc[(df_metrics['Synth'] == model) &
+                                (df_metrics['Label Classes'] == labelClass) &
+                                (df_metrics['Evaluator'] == evaluator_type)]
 
-    # Convert the confusion matrix to a list
-    conf_matrix_list = conf_matrix.tolist()
+    if update_row.empty:
+        # No previous record
+        df_metrics.loc[len(df_metrics.index)] = evaluator_metrics
 
-    # Combine reports with accuracy, confusion matrix, training and evaluation times for imbalanced dataset
-    imbalanced_report = {
-        "generation_time_seconds": generation_time_,
-        "training_time_seconds": training_time,
-        "testing_time_seconds": testing_time,
-        "accuracy": accuracy,
-        "class_report": class_report,
-        "conf_matrix": conf_matrix_list
-    }
+        print(f'{evaluator_type} / {model} / {labelClass} Metrics')
+        # display(df_metrics.loc[len(df_metrics.index) - 1])
 
-    # Save combined report for the imbalanced dataset
-    report_filename = os.path.join(report_dir, filename)
-    with open(report_filename, "w") as report_file:
-        json.dump(imbalanced_report, report_file, indent=4)
+    else:
+        # Previous record exists
+        update_row = evaluator_metrics
 
-    synth_train_data.to_csv(f'../results/synthetic_EVALUATION_{model_name}_{evaluator_type}_{timestamp}.csv', index=False)
+        print(f'{evaluator_type} / {model} / {labelClass} Metrics')
+        # display(df_metrics.loc[(df_metrics['Sampler'] == sampler) &
+        #                        (df_metrics['Label Classes'] == label_class) &
+        #                        (df_metrics['Evaluator'] == evaluator_type)])
+
+
+    # Save combined report
+    df_metrics['Synth'] = pd.Categorical(df_metrics['Synth'], categories=synth_categories)
+    df_metrics['Label Classes'] = pd.Categorical(df_metrics['Label Classes'], categories=label_classes)
+    df_metrics['Evaluator'] = pd.Categorical(df_metrics['Evaluator'], categories=evalautor_types)
+
+    df_metrics.sort_values(['Synth', 'Label Classes', 'Evaluator'], inplace=True)
+
+    df_metrics.to_json(path_or_buf=report_dir + '/synth_evaluator_metrics.json', orient='index')
+
+
+    synth_train_data.to_csv(f'../results/synthetic_EVALUATION_{model}_{evaluator_type}_{labelClass}_{timestamp}.csv', index=False)
     print("GAN reports saved successfully.")
 
 
 
-save_results(f'cwgangp', generation_time, training_time, testing_time, accuracy, class_report, conf_matrix)
+save_results(evaluator_metrics)
 
 # Save the synthetic data to a CSV file
 
@@ -523,7 +558,7 @@ label_names = [label_mapping[label] for label in sorted(label_mapping)]
 
 # Plotting the confusion matrix with label names
 fig, ax = plt.subplots(figsize=(12, 8))  # Adjust the figure size as needed
-sns.heatmap(conf_matrix, annot=False, fmt='d', cmap='Blues', xticklabels=label_names, yticklabels=label_names, ax=ax)
+# sns.heatmap(conf_matrix, annot=False, fmt='d', cmap='Blues', xticklabels=label_names, yticklabels=label_names, ax=ax)
 
 # Set axis labels with rotation for x-axis labels
 ax.set_xticklabels(label_names, rotation=45, ha="right")  # Rotate x-axis labels for better visibility
