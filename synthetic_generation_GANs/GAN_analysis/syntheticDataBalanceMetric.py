@@ -1,6 +1,8 @@
 #########################################################
 #    Imports    #
 #########################################################
+import json
+
 import tensorflow as tf
 
 # List all physical devices and configure them before any other operations
@@ -40,7 +42,6 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import pickle
 import joblib
-import json
 
 from ydata_synthetic.synthesizers.regular import RegularSynthesizer
 from ydata_synthetic.synthesizers import ModelParameters, TrainParameters
@@ -57,7 +58,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.metrics import confusion_matrix
 from sklearn.metrics import matthews_corrcoef
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score, f1_score
+from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score, precision_recall_fscore_support
 
 # Print versions and device configurations after ensuring GPU settings
 print("TensorFlow version:", tf.__version__)
@@ -67,107 +68,129 @@ print("TensorFlow version:", tf.__version__)
 # print(tf.config.list_physical_devices('GPU'), "\n")
 
 #########################################################
-#    Loading the Real Data   #
+#    Loading GAN Model and Generating Data              #
 #########################################################
-DATASET_DIRECTORY = '../../archive/'
 
-# List the files in the dataset
-csv_filepaths = [filename for filename in os.listdir(DATASET_DIRECTORY) if filename.endswith('.csv')]
-print(csv_filepaths)
 
-# If there are more than X CSV files, randomly select X files from the list
-sample_size = 1
-if len(csv_filepaths) > sample_size:
-    csv_filepaths = random.sample(csv_filepaths, sample_size)
-    print(csv_filepaths)
-csv_filepaths.sort()
+########## inputs #################
+# gan variants
+synth_categories = ['CWGANGP', 'CGAN', 'CTGAN', 'WGANGP']
+model = "CTGAN"  # input
 
-# list of csv files used for training data sets
-training_data_sets = csv_filepaths
+evalautor_types = ['XGBoost', 'LogisticRegression', 'Perceptron', 'AdaBoost', 'RandomForest', 'DeepNeuralNetwork', 'KNearestNeighbor']
 
-# Mapping Features
-num_cols = [
-    'flow_duration', 'Header_Length',  'Duration',
-    'Rate', 'Srate', 'ack_count', 'syn_count',
-    'fin_count', 'urg_count', 'rst_count', 'Tot sum',
-    'Min', 'Max', 'AVG', 'Std', 'Tot size', 'IAT', 'Number',
-    'Magnitue', 'Radius', 'Covariance', 'Variance', 'Weight',
-    ]
+label_classes = ['33+1', '7+1', '1+1']
+labelClass = "33+1"  # input
 
-cat_cols = [
-    'Protocol Type', 'Drate', 'fin_flag_number', 'syn_flag_number', 'rst_flag_number',
-    'psh_flag_number', 'ack_flag_number', 'ece_flag_number',
-    'cwr_flag_number', 'HTTP', 'HTTPS', 'DNS', 'Telnet',
-    'SMTP', 'SSH', 'IRC', 'TCP', 'UDP', 'DHCP', 'ARP',
-    'ICMP', 'IPv', 'LLC',
-    ]
+if model == "CWGANGP":
+    if labelClass == '33+1':
+        print(model, " ", labelClass)
+        # loading GAN
+        synth = RegularSynthesizer.load('../GAN_models/cyberattack_cwgangp_model_2_specific.pkl')  # input
+        # loading Scaler
+        scaler = joblib.load('../scalar_models/MinMaxScalerCWS_20240515185435.pkl')  # input
+    if labelClass == '7+1':
+        print(model, " ", labelClass)
+        # loading GAN
+        synth = RegularSynthesizer.load('../GAN_models/cyberattack_cwgangp_model_2_general.pkl')  # input
+        # loading Scaler
+        scaler = joblib.load('../scalar_models/MinMaxScalerCWG_20240515183824.pkl')  # input
+    if labelClass == '1+1':
+        print(model, " ", labelClass)
+        # loading GAN
+        synth = RegularSynthesizer.load('../GAN_models/cyberattack_cwgangp_model_2_binary1.pkl')  # input
+        # loading Scaler
+        scaler = joblib.load('../scalar_models/MinMaxScalerCWB_20240515182814.pkl')  # input
 
-# Mapping Labels
-dict_7classes = {'DDoS-RSTFINFlood': 'DDoS', 'DDoS-PSHACK_Flood': 'DDoS', 'DDoS-SYN_Flood': 'DDoS',
-                 'DDoS-UDP_Flood': 'DDoS', 'DDoS-TCP_Flood': 'DDoS', 'DDoS-ICMP_Flood': 'DDoS',
-                 'DDoS-SynonymousIP_Flood': 'DDoS', 'DDoS-ACK_Fragmentation': 'DDoS', 'DDoS-UDP_Fragmentation': 'DDoS',
-                 'DDoS-ICMP_Fragmentation': 'DDoS', 'DDoS-SlowLoris': 'DDoS', 'DDoS-HTTP_Flood': 'DDoS',
-                 'DoS-UDP_Flood': 'DoS', 'DoS-SYN_Flood': 'DoS', 'DoS-TCP_Flood': 'DoS', 'DoS-HTTP_Flood': 'DoS',
-                 'Mirai-greeth_flood': 'Mirai', 'Mirai-greip_flood': 'Mirai', 'Mirai-udpplain': 'Mirai',
-                 'Recon-PingSweep': 'Recon', 'Recon-OSScan': 'Recon', 'Recon-PortScan': 'Recon',
-                 'VulnerabilityScan': 'Recon', 'Recon-HostDiscovery': 'Recon', 'DNS_Spoofing': 'Spoofing',
-                 'MITM-ArpSpoofing': 'Spoofing', 'BenignTraffic': 'Benign', 'BrowserHijacking': 'Web',
-                 'Backdoor_Malware': 'Web', 'XSS': 'Web', 'Uploading_Attack': 'Web', 'SqlInjection': 'Web',
-                 'CommandInjection': 'Web', 'DictionaryBruteForce': 'BruteForce'}
+if model == "CGAN":
+    if labelClass == '33+1':
+        print(model, " ", labelClass)
+        # loading GAN
+        synth = RegularSynthesizer.load('../GAN_models/cyberattack_cgan_model_1_specific.pkl')  # input
+        # loading Scaler
+        scaler = joblib.load('../scalar_models/MinMaxScalerCS_20240515224149.pkl')  # input
+    if labelClass == '7+1':
+        print(model, " ", labelClass)
+        # loading GAN
+        synth = RegularSynthesizer.load('../GAN_models/cyberattack_cgan_model_1_general.pkl')  # input
+        # loading Scaler
+        scaler = joblib.load('../scalar_models/MinMaxScalerCG_20240516014417.pkl')  # input
+    if labelClass == '1+1':
+        print(model, " ", labelClass)
+        # loading GAN
+        synth = RegularSynthesizer.load('../GAN_models/cyberattack_cgan_model_1_binary.pkl')  # input
+        # loading Scaler
+        scaler = joblib.load('../scalar_models/MinMaxScalerCWB_20240515182814.pkl')  # input
 
-dict_2classes = {'DDoS-RSTFINFlood': 'Attack', 'DDoS-PSHACK_Flood': 'Attack', 'DDoS-SYN_Flood': 'Attack',
-                 'DDoS-UDP_Flood': 'Attack', 'DDoS-TCP_Flood': 'Attack', 'DDoS-ICMP_Flood': 'Attack',
-                 'DDoS-SynonymousIP_Flood': 'Attack', 'DDoS-ACK_Fragmentation': 'Attack',
-                 'DDoS-UDP_Fragmentation': 'Attack', 'DDoS-ICMP_Fragmentation': 'Attack', 'DDoS-SlowLoris': 'Attack',
-                 'DDoS-HTTP_Flood': 'Attack', 'DoS-UDP_Flood': 'Attack', 'DoS-SYN_Flood': 'Attack',
-                 'DoS-TCP_Flood': 'Attack', 'DoS-HTTP_Flood': 'Attack', 'Mirai-greeth_flood': 'Attack',
-                 'Mirai-greip_flood': 'Attack', 'Mirai-udpplain': 'Attack', 'Recon-PingSweep': 'Attack',
-                 'Recon-OSScan': 'Attack', 'Recon-PortScan': 'Attack', 'VulnerabilityScan': 'Attack',
-                 'Recon-HostDiscovery': 'Attack', 'DNS_Spoofing': 'Attack', 'MITM-ArpSpoofing': 'Attack',
-                 'BenignTraffic': 'Benign', 'BrowserHijacking': 'Attack', 'Backdoor_Malware': 'Attack', 'XSS': 'Attack',
-                 'Uploading_Attack': 'Attack', 'SqlInjection': 'Attack', 'CommandInjection': 'Attack',
-                 'DictionaryBruteForce': 'Attack'}
+if model == "CTGAN":
+    if labelClass == '33+1':
+        print(model, " ", labelClass)
+        # loading GAN
+        synth = RegularSynthesizer.load('../GAN_models/cyberattack_ctgan_model_3_specific2.pkl')  # input
+        # loading Scaler
+        scaler = joblib.load('../scalar_models/MinMaxScalerCTS_20240521194349.pkl')  # input
+    if labelClass == '7+1':
+        print(model, " ", labelClass)
+        # loading GAN
+        synth = RegularSynthesizer.load('../GAN_models/cyberattack_ctgan_model_3_general.pkl')  # input
+        # loading Scaler
+        scaler = joblib.load('../scalar_models/MinMaxScaler_ctGANGeneral.pkl')  # input
+    if labelClass == '1+1':
+        print(model, " ", labelClass)
+        # loading GAN
+        synth = RegularSynthesizer.load('../GAN_models/cyberattack_ctgan_model_3_binary.pkl')  # input
+        # loading Scaler
+        scaler = joblib.load('../scalar_models/MinMaxScalerCTB_20240517000909.pkl')  # input
 
-# Extracting data from csv to input into data frame
-real_data = pd.DataFrame()
-for data_set in training_data_sets:
-    print(f"data set {data_set} out of {len(training_data_sets)} \n")
-    data_path = os.path.join(DATASET_DIRECTORY, data_set)
-    df = pd.read_csv(data_path)
-    real_data = pd.concat([real_data, df])
+if model == "WGANGP":
+    if labelClass == '33+1':
+        print(model, " ", labelClass)
+        # loading GAN
+        synth = RegularSynthesizer.load('../GAN_models/attack_wgangp_model_specific.pkl')  # input
+        # loading Scaler
+        scaler = joblib.load('../scalar_models/MinMaxScalerWS_20240516120126.pkl')  # input
+    if labelClass == '7+1':
+        print(model, " ", labelClass)
+        # loading GAN
+        synth = RegularSynthesizer.load('../GAN_models/attack_wgangp_model_general.pkl')  # input
+        # loading Scaler
+        scaler = joblib.load('../scalar_models/MinMaxScalerWG_20240516120817.pkl')  # input
+    if labelClass == '1+1':
+        print(model, " ", labelClass)
+        # loading GAN
+        synth = RegularSynthesizer.load('../GAN_models/attack_wgangp_model_binary.pkl')  # input
+        # loading Scaler
+        scaler = joblib.load('../scalar_models/MinMaxScalerWB_20240516134008.pkl')  # input
 
-# Relabel the 'label' column using dict_7classes
-# real_train_data['label'] = real_train_data['label'].map(dict_7classes)
-
-# Relabel the 'label' column using dict_2classes
-# real_train_data['label'] = real_train_data['label'].map(dict_2classes)
-
-#########################################################
-#    Loading GAN and Generating Samples                 #
-#########################################################
-# loading GAN
-synth = RegularSynthesizer.load('../GAN_models/cyberattack_cwgangp_model_full_2.pkl')
-print(synth.model_name())
 
 # specifying the samples per class
-samples_per_class = 1000  # Adjust this as needed
+samples_per_synth_class = 10000  # input
+
+real_test_data_sample_size = 10000  # input
+
+#########################
+
 
 # dictionary to decode label
-synth_label_mapping = {0: 'Backdoor_Malware', 1: 'BenignTraffic', 2: 'BrowserHijacking', 3: 'CommandInjection',
-                       4: 'DDoS-ACK_Fragmentation', 5: 'DDoS-HTTP_Flood', 6: 'DDoS-ICMP_Flood',
-                       7: 'DDoS-ICMP_Fragmentation', 8: 'DDoS-PSHACK_Flood', 9: 'DDoS-RSTFINFlood',
-                       10: 'DDoS-SYN_Flood', 11: 'DDoS-SlowLoris', 12: 'DDoS-SynonymousIP_Flood', 13: 'DDoS-TCP_Flood',
-                       14: 'DDoS-UDP_Flood', 15: 'DDoS-UDP_Fragmentation', 16: 'DNS_Spoofing',
-                       17: 'DictionaryBruteForce', 18: 'DoS-HTTP_Flood', 19: 'DoS-SYN_Flood', 20: 'DoS-TCP_Flood',
-                       21: 'DoS-UDP_Flood', 22: 'MITM-ArpSpoofing', 23: 'Mirai-greeth_flood', 24: 'Mirai-greip_flood',
-                       25: 'Mirai-udpplain', 26: 'Recon-HostDiscovery', 27: 'Recon-OSScan', 28: 'Recon-PingSweep',
-                       29: 'Recon-PortScan', 30: 'SqlInjection', 31: 'Uploading_Attack', 32: 'VulnerabilityScan',
-                       33: 'XSS'}
-
-# synth_label_mapping = {0: 'DDOS', 1: 'DOS', 2: 'Mirai', 3: 'Recon',
-#                        4: 'Spoofing', 5: 'Benign', 6: 'Web', 7: 'BruteForce'}
-
-# synth_label_mapping = {0: 'Attack', 1: 'Benign'}
+if labelClass == "33+1":
+    print("Synthesizing synthetically generated Specific labels...")
+    synth_label_mapping = {0: 'Backdoor_Malware', 1: 'BenignTraffic', 2: 'BrowserHijacking', 3: 'CommandInjection',
+                           4: 'DDoS-ACK_Fragmentation', 5: 'DDoS-HTTP_Flood', 6: 'DDoS-ICMP_Flood',
+                           7: 'DDoS-ICMP_Fragmentation', 8: 'DDoS-PSHACK_Flood', 9: 'DDoS-RSTFINFlood',
+                           10: 'DDoS-SYN_Flood', 11: 'DDoS-SlowLoris', 12: 'DDoS-SynonymousIP_Flood', 13: 'DDoS-TCP_Flood',
+                           14: 'DDoS-UDP_Flood', 15: 'DDoS-UDP_Fragmentation', 16: 'DNS_Spoofing',
+                           17: 'DictionaryBruteForce', 18: 'DoS-HTTP_Flood', 19: 'DoS-SYN_Flood', 20: 'DoS-TCP_Flood',
+                           21: 'DoS-UDP_Flood', 22: 'MITM-ArpSpoofing', 23: 'Mirai-greeth_flood', 24: 'Mirai-greip_flood',
+                           25: 'Mirai-udpplain', 26: 'Recon-HostDiscovery', 27: 'Recon-OSScan', 28: 'Recon-PingSweep',
+                           29: 'Recon-PortScan', 30: 'SqlInjection', 31: 'Uploading_Attack', 32: 'VulnerabilityScan',
+                           33: 'XSS'}
+if labelClass == "7+1":
+    print("Synthesizing synthetically generated General labels...")
+    synth_label_mapping = {0: 'DDOS', 1: 'DOS', 2: 'Mirai', 3: 'Recon',
+                            4: 'Spoofing', 5: 'Benign', 6: 'Web', 7: 'BruteForce'}
+if labelClass == "1+1":
+    print("Synthesizing synthetically generated Binary labels...")
+    synth_label_mapping = {0: 'Attack', 1: 'Benign'}
 
 print("Synth labels mapping:", synth_label_mapping)
 
@@ -180,7 +203,7 @@ inverse_synth_label_mapping = {v: k for k, v in synth_label_mapping.items()}
 #     conditions.extend([code] * samples_per_class)
 conditions = []
 for label in synth_label_mapping.values():
-    conditions.extend([inverse_synth_label_mapping[label]] * samples_per_class)
+    conditions.extend([inverse_synth_label_mapping[label]] * samples_per_synth_class)
 
 # Optionally shuffle the conditions to randomize the order
 # np.random.shuffle(conditions)
@@ -193,8 +216,11 @@ start_time_gen = time.time()
 print("Start Generating...\n")
 
 # Generating synthetic samples
-synth_data = synth.sample(cond_array)  # # This uses the condition array
-# synth_train_data = synth.sample(100000)  # for non cgans
+if model == "WGANGP" or model == "CTGAN":
+    synth_data = synth.sample(samples_per_synth_class)  # for non cgans
+else:
+    synth_data = synth.sample(cond_array)  # # This uses the condition array
+
 
 # End the training timer
 generation_time = time.time() - start_time_gen
@@ -206,56 +232,6 @@ print(synth_data.head(), "\n")
 # Apply mapping to decode
 # synth_train_data['label'] = synth_train_data['label'].map(synth_label_mapping)
 # print(synth_train_data)
-#########################################################
-#               Postprocessing            #
-#########################################################
-
-scaler = joblib.load('../scalar_models/MinMaxScaler_ctGANGeneral.pkl')
-
-# find the amount of labels in the synth data
-unique_labels = synth_data['label'].unique()
-
-# Print the number of unique labels
-print(f"There are {unique_labels} unique labels in the dataset.")
-
-# print the amount of instances for each label
-class_counts = synth_data['label'].value_counts()
-print(class_counts, "\n")
-
-# Show each instance of synthetic data
-print("Synthetic Data (SCALED):")
-for label in unique_labels:
-    instances = synth_data[synth_data['label'] == label]
-    if not instances.empty:
-        print(f"First instance of {label}:")
-        print(instances.iloc[0])
-    else:
-        print(f"No instances found for label {label}")
-print(synth_data.head(), "\n")
-
-
-# inverse the scale on synthetic data
-synth_data[num_cols] = scaler.inverse_transform(synth_data[num_cols])
-
-# prove that the unscaled data is proper by printing each instance
-print("Synthetic Data (UNSCALED):")
-for label in unique_labels:
-    instances = synth_data[synth_data['label'] == label]
-    if not instances.empty:
-        print(f"First instance of {label}:")
-        print(instances.iloc[0])
-    else:
-        print(f"No instances found for label {label}")
-print(synth_data.head(), "\n")
-
-# decode the labels
-synth_data['label'] = synth_data['label'].map(synth_label_mapping)
-
-# prind the data
-print("Synthetic Data:")
-print(synth_data.head(), "\n")
-print("Real Data:")
-print(real_data.head(), "\n")
 
 #########################################################
 #    Analyzing the Synthetic Data   #
@@ -272,6 +248,195 @@ print(class_counts)
 
 # Display the first few entries to verify the changes
 print(synth_data.head())
+
+#########################################################
+#    Loading Real Data                                  #
+#########################################################
+DATASET_DIRECTORY = '../../archive/'
+
+# List the files in the dataset
+csv_filepaths = [filename for filename in os.listdir(DATASET_DIRECTORY) if filename.endswith('.csv')]
+print(csv_filepaths)
+
+# If there are more than X CSV files, randomly select X files from the list
+sample_size = 1
+if len(csv_filepaths) > sample_size:
+    csv_filepaths = random.sample(csv_filepaths, sample_size)
+    print(csv_filepaths)
+csv_filepaths.sort()
+
+# l\ist of csv files used for training data sets
+training_data_sets = csv_filepaths
+
+# Mapping Features
+num_cols = [
+    'flow_duration', 'Header_Length',  'Duration',
+    'Rate', 'Srate', 'ack_count', 'syn_count',
+    'fin_count', 'urg_count', 'rst_count', 'Tot sum',
+    'Min', 'Max', 'AVG', 'Std', 'Tot size', 'IAT', 'Number',
+    'Magnitue', 'Radius', 'Covariance', 'Variance', 'Weight',
+    ]
+
+# Mapping Labels
+cat_cols = [
+    'Protocol Type', 'Drate', 'fin_flag_number', 'syn_flag_number', 'rst_flag_number',
+    'psh_flag_number', 'ack_flag_number', 'ece_flag_number',
+    'cwr_flag_number', 'HTTP', 'HTTPS', 'DNS', 'Telnet',
+    'SMTP', 'SSH', 'IRC', 'TCP', 'UDP', 'DHCP', 'ARP',
+    'ICMP', 'IPv', 'LLC',
+    ]
+
+dict_7classes = {'DDoS-RSTFINFlood': 'DDoS', 'DDoS-PSHACK_Flood': 'DDoS', 'DDoS-SYN_Flood': 'DDoS',
+                 'DDoS-UDP_Flood': 'DDoS', 'DDoS-TCP_Flood': 'DDoS', 'DDoS-ICMP_Flood': 'DDoS',
+                 'DDoS-SynonymousIP_Flood': 'DDoS', 'DDoS-ACK_Fragmentation': 'DDoS', 'DDoS-UDP_Fragmentation': 'DDoS',
+                 'DDoS-ICMP_Fragmentation': 'DDoS', 'DDoS-SlowLoris': 'DDoS', 'DDoS-HTTP_Flood': 'DDoS',
+                 'DoS-UDP_Flood': 'DoS', 'DoS-SYN_Flood': 'DoS', 'DoS-TCP_Flood': 'DoS', 'DoS-HTTP_Flood': 'DoS',
+                 'Mirai-greeth_flood': 'Mirai', 'Mirai-greip_flood': 'Mirai', 'Mirai-udpplain': 'Mirai',
+                 'Recon-PingSweep': 'Recon', 'Recon-OSScan': 'Recon', 'Recon-PortScan': 'Recon',
+                 'VulnerabilityScan': 'Recon', 'Recon-HostDiscovery': 'Recon', 'DNS_Spoofing': 'Spoofing',
+                 'MITM-ArpSpoofing': 'Spoofing', 'BenignTraffic': 'Benign', 'BrowserHijacking': 'Web',
+                 'Backdoor_Malware': 'Web', 'XSS': 'Web', 'Uploading_Attack': 'Web', 'SqlInjection': 'Web',
+                 'CommandInjection': 'Web', 'DictionaryBruteForce': 'BruteForce'
+                 }
+
+dict_2classes = {'DDoS-RSTFINFlood': 'Attack', 'DDoS-PSHACK_Flood': 'Attack', 'DDoS-SYN_Flood': 'Attack',
+                 'DDoS-UDP_Flood': 'Attack', 'DDoS-TCP_Flood': 'Attack', 'DDoS-ICMP_Flood': 'Attack',
+                 'DDoS-SynonymousIP_Flood': 'Attack', 'DDoS-ACK_Fragmentation': 'Attack',
+                 'DDoS-UDP_Fragmentation': 'Attack', 'DDoS-ICMP_Fragmentation': 'Attack', 'DDoS-SlowLoris': 'Attack',
+                 'DDoS-HTTP_Flood': 'Attack', 'DoS-UDP_Flood': 'Attack', 'DoS-SYN_Flood': 'Attack',
+                 'DoS-TCP_Flood': 'Attack', 'DoS-HTTP_Flood': 'Attack', 'Mirai-greeth_flood': 'Attack',
+                 'Mirai-greip_flood': 'Attack', 'Mirai-udpplain': 'Attack', 'Recon-PingSweep': 'Attack',
+                 'Recon-OSScan': 'Attack', 'Recon-PortScan': 'Attack', 'VulnerabilityScan': 'Attack',
+                 'Recon-HostDiscovery': 'Attack', 'DNS_Spoofing': 'Attack', 'MITM-ArpSpoofing': 'Attack',
+                 'BenignTraffic': 'Benign', 'BrowserHijacking': 'Attack', 'Backdoor_Malware': 'Attack', 'XSS': 'Attack',
+                 'Uploading_Attack': 'Attack', 'SqlInjection': 'Attack', 'CommandInjection': 'Attack',
+                 'DictionaryBruteForce': 'Attack'
+                 }
+
+# Extracting data from csv to input into data frame
+real_data = pd.DataFrame()
+for data_set in training_data_sets:
+    print(f"data set {data_set} out of {len(training_data_sets)} \n")
+    data_path = os.path.join(DATASET_DIRECTORY, data_set)
+    df = pd.read_csv(data_path)
+    real_data = pd.concat([real_data, df])
+
+# Relabel the 'label' column using dict_7classes
+if labelClass == "7+1":
+    print("General Classes")
+    real_data['label'] = real_data['label'].map(dict_7classes)
+
+if labelClass == "1+1":
+    print("Binary Classes")
+    # Relabel the 'label' column using dict_2classes
+    real_data['label'] = real_data['label'].map(dict_2classes)
+
+# Shuffle data
+real_data = shuffle(real_data, random_state=1)
+
+#########################################################
+#    Analyzing the Synthetic Data                       #
+#########################################################
+# x and y split
+X = {}
+y = {}
+
+for _class in label_classes:
+    X[_class] = synth_data[_class].drop('label', axis=1)
+    y[_class] = synth_data[_class]['label']
+
+print(f'X: {X[label_classes[0]].shape}, y: {y[label_classes[0]].shape}')
+
+# Assuming 'label' is the column name for the labels in the DataFrame `synth_data`
+unique_labels_synth = synth_data['label'].unique()
+
+# Print the number of unique labels
+# print(f"There are {unique_labels_synth} unique labels in the Synthetic dataset.")
+num_unique_labels_synth = len(unique_labels_synth)
+print(f"There are {num_unique_labels_synth} unique labels in the Synthetic dataset.")
+
+# print the amount of instances for each label
+class_counts_synth = synth_data['label'].value_counts()
+print(class_counts_synth)
+
+# Display the first few entries to verify the changes
+print("Synthetic dataset:")
+print(synth_data.head())
+
+all_data_generated = {}
+for _class in label_classes:
+    all_data_generated[_class] = pd.concat([X[_class], y[_class]], axis=1)
+
+# prints an instance of each class
+print("Each Instance in the Synthetic Training Dataset:")
+for label in unique_labels_synth:
+    instances = synth_data[synth_data['label'] == label]
+    if not instances.empty:
+        print(f"First instance of {label}:")
+        print(instances.iloc[0])
+    else:
+        print(f"No instances found for label {label}")
+
+
+
+#########################################################
+#         Saving Metrics and Results                     #
+#########################################################
+
+# Directory to save classification report text files
+report_dir = "./synth_data_reports"
+os.makedirs(report_dir, exist_ok=True)
+
+# If there's no sampled_dataset_metrics.json, make a new one and store the unsampled dataset metrics
+try:
+    df_label_counts = pd.read_json(path_or_buf=report_dir + '/sampling_label_counts.json', orient='index')
+
+except FileNotFoundError:
+    # schema:   Synth | Label Classes | 0 | 1 | 2 | 3 | ... | 31 | 32 | 33
+    df_label_counts = pd.DataFrame(columns=['Synth', 'Label Classes'] + [str(i) for i in range(34)])
+
+
+def save_results():
+    # Get the current timestamp
+    timestamp = time.strftime("%Y%m%d%H%M%S")
+
+    # Update dataframe
+    for label_class in label_classes:
+
+        row_index = df_label_counts.index[
+            (df_label_counts['Synth'] == model) & (df_label_counts['Label Classes'] == label_class)]
+        row_index = row_index.tolist()
+
+        value_counts = all_data_generated[label_class]['label'].value_counts()
+        value_counts.sort_index(inplace=True)
+
+        match len(row_index):
+            case 0:  # No previous record
+                row_index = len(df_label_counts.index)
+                df_label_counts.loc[row_index, 'Synth'] = model
+                df_label_counts.loc[row_index, 'Label Classes'] = label_class
+
+                for i in range(len(value_counts)):
+                    df_label_counts.loc[row_index, str(i)] = value_counts[i]
+
+            case 1:  # Update previous record
+                for i in range(len(value_counts)):
+                    df_label_counts.loc[row_index, str(i)] = value_counts[i]
+
+            case _:
+                assert False, f'ERROR: {model} / {label_class} is duplicated. This should NOT happen.'
+
+    # Update file
+    df_label_counts.to_json(path_or_buf=report_dir + '/generated_label_counts.json', orient='index')
+    print("GAN reports saved successfully.")
+
+
+# Call save_results with the evaluator_metrics list
+save_results()
+
+
+# Save the synthetic data to a CSV file
+synth_data.to_csv('./results/synthetic_TEST_data.csv', index=False)
 
 #########################################################
 #         Making Graphs, Documents, and Diagrams        #
@@ -325,41 +490,7 @@ plot_feature_comparison(real_data, synth_data, 'flow_duration', 'Duration')
 
 # Provide a Report of each feature and other stats from Ydata profiling
 original_report = ProfileReport(real_data, title='Original Data', minimal=True)
-resampled_report = ProfileReport(synth_data, title='Resampled Data', minimal=True)
-comparison_report = original_report.compare(resampled_report)
-comparison_report.to_file('./profile_reports/cwgangp_TEST_original_vs_synth.html')
-
-#########################################################
-#         Saving Metrics and Results                     #
-#########################################################
-
-
-def save_results(model_name, generation_time_):
-    # Get the current timestamp
-    timestamp = time.strftime("%Y%m%d%H%M%S")
-
-    # Directory to save classification report text files
-    report_dir = "./synth_data_reports"
-    os.makedirs(report_dir, exist_ok=True)
-
-    # Format the filenames to include the model name and type of dataset
-    filename = f"{model_name}_synth_data_report{timestamp}.txt"
-
-    # Combine reports with accuracy, confusion matrix, training and evaluation times for imbalanced dataset
-    imbalanced_report = {
-        "generation_time_seconds": generation_time_
-    }
-
-    # Save combined report for the imbalanced dataset
-    report_filename = os.path.join(report_dir, filename)
-    with open(report_filename, "w") as report_file:
-        json.dump(imbalanced_report, report_file, indent=4)
-
-    print("GAN reports saved successfully.")
-
-
-save_results('cwgangp', generation_time)
-
-# Save the synthetic data to a CSV file
-synth_data.to_csv('./results/synthetic_TEST_data.csv', index=False)
+generated_report = ProfileReport(synth_data, title='Generated Data', minimal=True)
+comparison_report = original_report.compare(generated_report)
+comparison_report.to_file(f'./profile_reports/{model}_TEST_original_vs_synth.html')
 
