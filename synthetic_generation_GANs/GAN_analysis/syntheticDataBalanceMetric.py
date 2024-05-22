@@ -233,21 +233,6 @@ print(synth_data.head(), "\n")
 # synth_train_data['label'] = synth_train_data['label'].map(synth_label_mapping)
 # print(synth_train_data)
 
-#########################################################
-#    Analyzing the Synthetic Data   #
-#########################################################
-
-# Assuming 'label' is the column name for the labels in the DataFrame `synth_data`
-unique_labels = synth_data['label'].nunique()
-
-# Print the number of unique labels
-print(f"There are {unique_labels} unique labels in the dataset.")
-
-class_counts = synth_data['label'].value_counts()
-print(class_counts)
-
-# Display the first few entries to verify the changes
-print(synth_data.head())
 
 #########################################################
 #    Loading Real Data                                  #
@@ -334,6 +319,7 @@ if labelClass == "1+1":
 # Shuffle data
 real_data = shuffle(real_data, random_state=1)
 
+
 #########################################################
 #    Analyzing the Synthetic Data                       #
 #########################################################
@@ -348,7 +334,7 @@ for _class in label_classes:
 print(f'X: {X[label_classes[0]].shape}, y: {y[label_classes[0]].shape}')
 
 # Assuming 'label' is the column name for the labels in the DataFrame `synth_data`
-unique_labels_synth = synth_data['label'].unique()
+unique_labels_synth = synth_data['label'].nunique()
 
 # Print the number of unique labels
 # print(f"There are {unique_labels_synth} unique labels in the Synthetic dataset.")
@@ -378,7 +364,6 @@ for label in unique_labels_synth:
         print(f"No instances found for label {label}")
 
 
-
 #########################################################
 #         Saving Metrics and Results                     #
 #########################################################
@@ -389,7 +374,7 @@ os.makedirs(report_dir, exist_ok=True)
 
 # If there's no sampled_dataset_metrics.json, make a new one and store the unsampled dataset metrics
 try:
-    df_label_counts = pd.read_json(path_or_buf=report_dir + '/sampling_label_counts.json', orient='index')
+    df_label_counts = pd.read_json(path_or_buf=report_dir + '/generated_label_counts.json', orient='index')
 
 except FileNotFoundError:
     # schema:   Synth | Label Classes | 0 | 1 | 2 | 3 | ... | 31 | 32 | 33
@@ -437,6 +422,13 @@ save_results()
 
 # Save the synthetic data to a CSV file
 synth_data.to_csv('./results/synthetic_TEST_data.csv', index=False)
+
+for _class in label_classes:
+    # Provide a Report of each feature and other stats from Ydata profiling
+    original_report = ProfileReport(real_data, title='Original Data', minimal=True)
+    generated_report = ProfileReport(synth_data, title='Generated Data', minimal=True)
+    comparison_report = original_report.compare(generated_report)
+    comparison_report.to_file(f'./profile_reports/{model}_TEST_original_vs_synth.html')
 
 #########################################################
 #         Making Graphs, Documents, and Diagrams        #
@@ -487,10 +479,3 @@ plot_class_distribution(synth_data, 'Synthetic Data Class Distribution')
 
 # Plot feature comparisons (adjust 'feature1' and 'feature2' to your dataset's features)
 plot_feature_comparison(real_data, synth_data, 'flow_duration', 'Duration')
-
-# Provide a Report of each feature and other stats from Ydata profiling
-original_report = ProfileReport(real_data, title='Original Data', minimal=True)
-generated_report = ProfileReport(synth_data, title='Generated Data', minimal=True)
-comparison_report = original_report.compare(generated_report)
-comparison_report.to_file(f'./profile_reports/{model}_TEST_original_vs_synth.html')
-
