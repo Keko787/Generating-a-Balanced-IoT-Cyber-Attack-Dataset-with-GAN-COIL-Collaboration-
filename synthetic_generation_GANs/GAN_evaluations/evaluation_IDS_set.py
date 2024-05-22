@@ -73,38 +73,124 @@ print("TensorFlow version:", tf.__version__)
 
 
 ########## inputs #################
-
+# gan variants
 synth_categories = ['CWGANGP', 'CGAN', 'CTGAN', 'WGANGP']
-model = "CWGANGP"
+model = "CTGAN"  # input
+
 evalautor_types = ['XGBoost', 'LogisticRegression', 'Perceptron', 'AdaBoost', 'RandomForest', 'DeepNeuralNetwork', 'KNearestNeighbor']
-evaluator_type = "DeepNeuralNetwork"
+
 label_classes = ['33+1', '7+1', '1+1']
-labelClass = "33+1"
+labelClass = "1+1"  # input
 
+if model == "CWGANGP":
+    if labelClass == '33+1':
+        print(model, " ", labelClass)
+        # loading GAN
+        synth = RegularSynthesizer.load('../GAN_models/cyberattack_cwgangp_model_2_specific.pkl')  # input
+        # loading Scaler
+        scaler = joblib.load('../scalar_models/MinMaxScalerCWS_20240515185435.pkl')  # input
+    if labelClass == '7+1':
+        print(model, " ", labelClass)
+        # loading GAN
+        synth = RegularSynthesizer.load('../GAN_models/cyberattack_cwgangp_model_2_general.pkl')  # input
+        # loading Scaler
+        scaler = joblib.load('../scalar_models/MinMaxScalerCWG_20240515183824.pkl')  # input
+    if labelClass == '1+1':
+        print(model, " ", labelClass)
+        # loading GAN
+        synth = RegularSynthesizer.load('../GAN_models/cyberattack_cwgangp_model_2_binary1.pkl')  # input
+        # loading Scaler
+        scaler = joblib.load('../scalar_models/MinMaxScalerCWB_20240515182814.pkl')  # input
 
-#########################
-# loading GAN
-synth = RegularSynthesizer.load('../GAN_models/cyberattack_cwgangp_model_2_specific.pkl')
+if model == "CGAN":
+    if labelClass == '33+1':
+        print(model, " ", labelClass)
+        # loading GAN
+        synth = RegularSynthesizer.load('../GAN_models/cyberattack_cgan_model_1_specific.pkl')  # input
+        # loading Scaler
+        scaler = joblib.load('../scalar_models/MinMaxScalerCS_20240515224149.pkl')  # input
+    if labelClass == '7+1':
+        print(model, " ", labelClass)
+        # loading GAN
+        synth = RegularSynthesizer.load('../GAN_models/cyberattack_cgan_model_1_general.pkl')  # input
+        # loading Scaler
+        scaler = joblib.load('../scalar_models/MinMaxScalerCG_20240516014417.pkl')  # input
+    if labelClass == '1+1':
+        print(model, " ", labelClass)
+        # loading GAN
+        synth = RegularSynthesizer.load('../GAN_models/cyberattack_cgan_model_1_binary.pkl')  # input
+        # loading Scaler
+        scaler = joblib.load('../scalar_models/MinMaxScalerCWB_20240515182814.pkl')  # input
+
+if model == "CTGAN":
+    if labelClass == '33+1':
+        print(model, " ", labelClass)
+        # loading GAN
+        synth = RegularSynthesizer.load('../GAN_models/cyberattack_ctgan_model_3_specific1.pkl')  # input
+        # loading Scaler
+        scaler = joblib.load('../scalar_models/MinMaxScaler_ctGANGeneral.pkl')  # input
+    if labelClass == '7+1':
+        print(model, " ", labelClass)
+        # loading GAN
+        synth = RegularSynthesizer.load('../GAN_models/cyberattack_ctgan_model_3_general.pkl')  # input
+        # loading Scaler
+        scaler = joblib.load('../scalar_models/MinMaxScaler_ctGANGeneral.pkl')  # input
+    if labelClass == '1+1':
+        print(model, " ", labelClass)
+        # loading GAN
+        synth = RegularSynthesizer.load('../GAN_models/cyberattack_ctgan_model_3_binary.pkl')  # input
+        # loading Scaler
+        scaler = joblib.load('../scalar_models/MinMaxScalerCTB_20240517000909.pkl')  # input
+
+if model == "WGANGP":
+    if labelClass == '33+1':
+        print(model, " ", labelClass)
+        # loading GAN
+        synth = RegularSynthesizer.load('../GAN_models/attack_wgangp_model_specific.pkl')  # input
+        # loading Scaler
+        scaler = joblib.load('../scalar_models/MinMaxScalerWS_20240516120126.pkl')  # input
+    if labelClass == '7+1':
+        print(model, " ", labelClass)
+        # loading GAN
+        synth = RegularSynthesizer.load('../GAN_models/attack_wgangp_model_general.pkl')  # input
+        # loading Scaler
+        scaler = joblib.load('../scalar_models/MinMaxScalerWG_20240516120817.pkl')  # input
+    if labelClass == '1+1':
+        print(model, " ", labelClass)
+        # loading GAN
+        synth = RegularSynthesizer.load('../GAN_models/attack_wgangp_model_binary.pkl')  # input
+        # loading Scaler
+        scaler = joblib.load('../scalar_models/MinMaxScalerWB_20240516134008.pkl')  # input
+
 
 # specifying the samples per class
-samples_per_class = 1000  # Adjust this as needed
+samples_per_synth_class = 10000  # input
+
+real_test_data_sample_size = 2000  # input
+
+#########################
+
 
 # dictionary to decode label
-synth_label_mapping = {0: 'Backdoor_Malware', 1: 'BenignTraffic', 2: 'BrowserHijacking', 3: 'CommandInjection',
-                       4: 'DDoS-ACK_Fragmentation', 5: 'DDoS-HTTP_Flood', 6: 'DDoS-ICMP_Flood',
-                       7: 'DDoS-ICMP_Fragmentation', 8: 'DDoS-PSHACK_Flood', 9: 'DDoS-RSTFINFlood',
-                       10: 'DDoS-SYN_Flood', 11: 'DDoS-SlowLoris', 12: 'DDoS-SynonymousIP_Flood', 13: 'DDoS-TCP_Flood',
-                       14: 'DDoS-UDP_Flood', 15: 'DDoS-UDP_Fragmentation', 16: 'DNS_Spoofing',
-                       17: 'DictionaryBruteForce', 18: 'DoS-HTTP_Flood', 19: 'DoS-SYN_Flood', 20: 'DoS-TCP_Flood',
-                       21: 'DoS-UDP_Flood', 22: 'MITM-ArpSpoofing', 23: 'Mirai-greeth_flood', 24: 'Mirai-greip_flood',
-                       25: 'Mirai-udpplain', 26: 'Recon-HostDiscovery', 27: 'Recon-OSScan', 28: 'Recon-PingSweep',
-                       29: 'Recon-PortScan', 30: 'SqlInjection', 31: 'Uploading_Attack', 32: 'VulnerabilityScan',
-                       33: 'XSS'}
-
-# synth_label_mapping = {0: 'DDOS', 1: 'DOS', 2: 'Mirai', 3: 'Recon',
-#                        4: 'Spoofing', 5: 'Benign', 6: 'Web', 7: 'BruteForce'}
-
-# synth_label_mapping = {0: 'Attack', 1: 'Benign'}
+if labelClass == "33+1":
+    print("Synthesizing synthetically generated Specific labels...")
+    synth_label_mapping = {0: 'Backdoor_Malware', 1: 'BenignTraffic', 2: 'BrowserHijacking', 3: 'CommandInjection',
+                           4: 'DDoS-ACK_Fragmentation', 5: 'DDoS-HTTP_Flood', 6: 'DDoS-ICMP_Flood',
+                           7: 'DDoS-ICMP_Fragmentation', 8: 'DDoS-PSHACK_Flood', 9: 'DDoS-RSTFINFlood',
+                           10: 'DDoS-SYN_Flood', 11: 'DDoS-SlowLoris', 12: 'DDoS-SynonymousIP_Flood', 13: 'DDoS-TCP_Flood',
+                           14: 'DDoS-UDP_Flood', 15: 'DDoS-UDP_Fragmentation', 16: 'DNS_Spoofing',
+                           17: 'DictionaryBruteForce', 18: 'DoS-HTTP_Flood', 19: 'DoS-SYN_Flood', 20: 'DoS-TCP_Flood',
+                           21: 'DoS-UDP_Flood', 22: 'MITM-ArpSpoofing', 23: 'Mirai-greeth_flood', 24: 'Mirai-greip_flood',
+                           25: 'Mirai-udpplain', 26: 'Recon-HostDiscovery', 27: 'Recon-OSScan', 28: 'Recon-PingSweep',
+                           29: 'Recon-PortScan', 30: 'SqlInjection', 31: 'Uploading_Attack', 32: 'VulnerabilityScan',
+                           33: 'XSS'}
+if labelClass == "7+1":
+    print("Synthesizing synthetically generated General labels...")
+    synth_label_mapping = {0: 'DDOS', 1: 'DOS', 2: 'Mirai', 3: 'Recon',
+                            4: 'Spoofing', 5: 'Benign', 6: 'Web', 7: 'BruteForce'}
+if labelClass == "1+1":
+    print("Synthesizing synthetically generated Binary labels...")
+    synth_label_mapping = {0: 'Attack', 1: 'Benign'}
 
 print("Synth labels mapping:", synth_label_mapping)
 
@@ -117,7 +203,7 @@ inverse_synth_label_mapping = {v: k for k, v in synth_label_mapping.items()}
 #     conditions.extend([code] * samples_per_class)
 conditions = []
 for label in synth_label_mapping.values():
-    conditions.extend([inverse_synth_label_mapping[label]] * samples_per_class)
+    conditions.extend([inverse_synth_label_mapping[label]] * samples_per_synth_class)
 
 # Optionally shuffle the conditions to randomize the order
 # np.random.shuffle(conditions)
@@ -130,8 +216,11 @@ start_time_gen = time.time()
 print("Start Generating...\n")
 
 # Generating synthetic samples
-synth_train_data = synth.sample(cond_array)  # # This uses the condition array
-# synth_train_data = synth.sample(100000)  # for non cgans
+if model == "WGANGP" or model == "CTGAN":
+    synth_train_data = synth.sample(samples_per_synth_class)  # for non cgans
+else:
+    synth_train_data = synth.sample(cond_array)  # # This uses the condition array
+
 
 # End the training timer
 generation_time = time.time() - start_time_gen
@@ -216,10 +305,14 @@ for data_set in training_data_sets:
     real_test_data = pd.concat([real_test_data, df])
 
 # Relabel the 'label' column using dict_7classes
-# real_test_data['label'] = real_test_data['label'].map(dict_7classes)
+if labelClass == "7+1":
+    print("General Classes")
+    real_test_data['label'] = real_test_data['label'].map(dict_7classes)
 
-# # Relabel the 'label' column using dict_2classes
-# real_test_data['label'] = real_test_data['label'].map(dict_2classes)
+if labelClass == "1+1":
+    print("Binary Classes")
+    # Relabel the 'label' column using dict_2classes
+    real_test_data['label'] = real_test_data['label'].map(dict_2classes)
 
 # Shuffle data
 real_test_data = shuffle(real_test_data, random_state=1)
@@ -302,7 +395,7 @@ for label in unique_labels_synth:
 
 # Load up Scaler from GAN Training for Features
 #scaler = joblib.load('RobustScaler_.pkl')
-scaler = joblib.load('../scalar_models/MinMaxScalerCWS_20240515185435.pkl')
+
 # scaler = joblib.load('PowerTransformer_.pkl')
 
 # train the scalar on train data features
@@ -332,7 +425,7 @@ print(class_counts)
 # Display the first few entries to verify the changes
 print(real_test_data.head())
 
-# Encodes the training label
+# Encodes the test label
 label_encoder = LabelEncoder()
 real_test_data['label'] = label_encoder.fit_transform(real_test_data['label'])
 
@@ -365,7 +458,7 @@ print(f"Filtered labels in the real dataset: {filtered_real_data_labels}")
 
 # Optionally, balance or sample the real data to ensure the model is tested evenly across classes
 # Here, we sample a fixed number (e.g., 10000 instances), but you can also use other sampling strategies.
-sampled_real_test_data = filtered_real_data.sample(min(100000, len(filtered_real_data)), random_state=42)
+sampled_real_test_data = filtered_real_data.sample(min(real_test_data_sample_size, len(filtered_real_data)), random_state=42)
 
 print("Filtered and sampled real data statistics:")
 print(sampled_real_test_data['label'].value_counts())
@@ -376,95 +469,66 @@ print(sampled_real_test_data['label'].value_counts())
 X_train_synthetic = synth_train_data.drop('label', axis=1)  # Synthetic Features
 y_train_synthetic = synth_train_data['label']               # Synthetic Labels
 
+if model == "WGANGP" or model == "CTGAN":
+    # re-encoding labels to go back to 0
+    combined_label_encoder = LabelEncoder()
+
+    y_train_synthetic = combined_label_encoder.fit_transform(y_train_synthetic)
+
 #########################################################
 #    Splitting Real Data as Features and Labels  #
 #########################################################
 X_test_real = sampled_real_test_data.drop('label', axis=1)  # Real Features
 y_test_real = sampled_real_test_data['label']               # Real Labels
 
+if model == "WGANGP" or model == "CTGAN":
+    # re-encoding labels to go back to 0
+    y_test_real = combined_label_encoder.fit_transform(y_test_real)
+
 #########################################################
 #    Setting up IDS Classifier Model  #
 #########################################################
 
-
-match evaluator_type:
-    case 'XGBoost':
+# Function to get evaluator based on type
+def get_evaluator(evaluator_type, unique_labels_synth):
+    if evaluator_type == 'XGBoost':
         print("Using XGBoost Classifier...\n")
         from xgboost import XGBClassifier
-        evaluator = XGBClassifier()
-
-    case 'LogisticRegression':
+        if unique_labels_synth == 2:
+            return XGBClassifier(objective='binary:logistic')
+        return XGBClassifier()
+    elif evaluator_type == 'LogisticRegression':
         print("Using LogisticRegression Classifier...\n")
         from sklearn.linear_model import LogisticRegression
-        evaluator = LogisticRegression(random_state=42, n_jobs=-1)
-
-    case 'Perceptron':
+        return LogisticRegression(random_state=42, n_jobs=-1)
+    elif evaluator_type == 'Perceptron':
         print("Using Perceptron Classifier...\n")
         from sklearn.linear_model import Perceptron
-        evaluator = Perceptron(random_state=42, n_jobs=-1)
-
-    case 'AdaBoost':
+        return Perceptron(random_state=42, n_jobs=-1)
+    elif evaluator_type == 'AdaBoost':
         print("Using AdaBoost Classifier...\n")
         from sklearn.ensemble import AdaBoostClassifier
-        evaluator = AdaBoostClassifier(random_state=42, algorithm='SAMME')
-
-    case 'RandomForest':
+        return AdaBoostClassifier(random_state=42, algorithm='SAMME')
+    elif evaluator_type == 'RandomForest':
         print("Using RandomForest Classifier...\n")
         from sklearn.ensemble import RandomForestClassifier
-        evaluator = RandomForestClassifier(random_state=42, n_jobs=-1)
-
-    case 'DeepNeuralNetwork':
+        return RandomForestClassifier(random_state=42, n_jobs=-1)
+    elif evaluator_type == 'DeepNeuralNetwork':
         print("Using DeepNeuralNetwork Classifier...\n")
         from sklearn.neural_network import MLPClassifier
-        evaluator = MLPClassifier(random_state=42)
-
-    case 'KNearestNeighbor':
+        return MLPClassifier(random_state=42)
+    elif evaluator_type == 'KNearestNeighbor':
         print("Using KNearestNeighbor Classifier...\n")
         from sklearn.neighbors import KNeighborsClassifier
-        evaluator = KNeighborsClassifier(n_jobs=-1)
-
-    case _:
+        return KNeighborsClassifier(n_jobs=-1)
+    else:
         print(f'Invalid evaluator model: {evaluator_type}')
-
-
-# XGBoost for binary classification must be a binary objective
-if evaluator_type == 'XGBoost' and unique_labels_synth == 2:
-    evaluator = XGBClassifier(objective='binary:logistic')
+        return None
 
 #########################################################
-#    Training  Random Forest Classifier Model  #
+#    Training and Testing Each Evaluator  #
 #########################################################
 
-# Start the training timer
-start_time_train = time.time()
-print("Start Training...\n")
-
-# Train the model using the synthetic features and labels
-evaluator.fit(X_train_synthetic, y_train_synthetic)
-
-# End the training timer
-training_time = time.time() - start_time_train
-print("Finished Training...\n")
-
-#########################################################
-#    Testing IDS Model  #
-#########################################################
-
-# Start the training timer
-start_time_test = time.time()
-print("Start Testing...\n")
-
-# Use the real testing data set labels
-y_eval_pred = evaluator.predict(X_test_real)
-
-# End the training timer
-testing_time = time.time() - start_time_test
-print("Finished Testing...\n")
-
-
-#########################################################
-# open the evaluator results file  #
-#########################################################
 # Directory to save classification report text files
 report_dir = "./synth_data_reports"
 os.makedirs(report_dir, exist_ok=True)
@@ -476,106 +540,116 @@ except FileNotFoundError:
     df_metrics = pd.DataFrame(
         columns=['Synth', 'Label Classes', 'Evaluator', 'Test Duration', 'Accuracy', 'Precision', 'Recall', 'F1'])
 
-#########################################################
-# Analyze Test Results  #
-#########################################################
-from sklearn.metrics import classification_report, accuracy_score
+for evaluator_type in evalautor_types:
+    evaluator = get_evaluator(evaluator_type, unique_labels_synth)
 
-# Calculating accuracy
-accuracy = accuracy_score(y_test_real, y_eval_pred)
-print(f"Accuracy of the model: {accuracy:.2%}")
+    if evaluator is None:
+        continue
 
-# Detailed classification report
-class_report = classification_report(y_test_real, y_eval_pred)
-print("Classification Report:")
-print(class_report)
+    #########################################################
+    #    Training  Evaluator Model  #
+    #########################################################
 
-# classification report
-precision = precision_score(y_test_real, y_eval_pred, average='macro', zero_division=0.0)
-recall = recall_score(y_test_real, y_eval_pred, average='macro')
-f1 = f1_score(y_test_real, y_eval_pred, average='macro')
+    # Start the training timer
+    start_time_train = time.time()
+    print("Start Training...\n")
 
-evaluator_metrics = [model, labelClass, evaluator_type, testing_time, accuracy,
-                     precision, recall, f1]
+    # Train the model using the synthetic features and labels
+    evaluator.fit(X_train_synthetic, y_train_synthetic)
 
-#########################################################
-#         Saving Metrics and Results                     #
-#########################################################
+    # End the training timer
+    training_time = time.time() - start_time_train
+    print("Finished Training...\n")
 
+    #########################################################
+    #    Testing IDS Model  #
+    #########################################################
 
-def save_results(evaluator_metrics):
-    # Get the current timestamp
-    timestamp = time.strftime("%Y%m%d%H%M%S")
+    # Start the training timer
+    start_time_test = time.time()
+    print("Start Testing...\n")
 
-    # Debugging: Print the column names and evaluator_metrics list
-    print("DataFrame columns:", df_metrics.columns)
-    print("Evaluator metrics:", evaluator_metrics)
+    # Use the real testing data set labels
+    y_eval_pred = evaluator.predict(X_test_real)
 
-    # Add metrics to dataframe and display
-    update_row = df_metrics.loc[(df_metrics['Synth'] == model) &
-                                (df_metrics['Label Classes'] == labelClass) &
-                                (df_metrics['Evaluator'] == evaluator_type)]
+    # End the training timer
+    testing_time = time.time() - start_time_test
+    print("Finished Testing...\n")
 
-    if update_row.empty:
-        print("No existing record found. Adding new entry.")
-        # No previous record
-        df_metrics.loc[len(df_metrics.index)] = evaluator_metrics
+    #########################################################
+    # Analyze Test Results  #
+    #########################################################
+    from sklearn.metrics import classification_report, accuracy_score
 
-        print(f'{evaluator_type} / {model} / {labelClass} Metrics')
-        # display(df_metrics.loc[len(df_metrics.index) - 1])
+    # Calculating accuracy
+    accuracy = accuracy_score(y_test_real, y_eval_pred)
+    print(f"Accuracy of the model: {accuracy:.2%}")
 
-    else:
-        # Previous record exists, update it
-        print("Existing record found. Updating entry.")
-        df_metrics.loc[update_row.index, :] = evaluator_metrics
+    # Detailed classification report
+    class_report = classification_report(y_test_real, y_eval_pred)
+    print("Classification Report:")
+    print(class_report)
 
-        print(f'{evaluator_type} / {model} / {labelClass} Metrics')
-        # display(df_metrics.loc[(df_metrics['Synth'] == model) &
-        #                        (df_metrics['Label Classes'] == labelClass) &
-        #                        (df_metrics['Evaluator'] == evaluator_type)])
+    # classification report
+    precision = precision_score(y_test_real, y_eval_pred, average='macro', zero_division=0.0)
+    recall = recall_score(y_test_real, y_eval_pred, average='macro')
+    f1 = f1_score(y_test_real, y_eval_pred, average='macro')
 
-    # Save combined report
-    df_metrics['Synth'] = pd.Categorical(df_metrics['Synth'], categories=synth_categories)
-    df_metrics['Label Classes'] = pd.Categorical(df_metrics['Label Classes'], categories=label_classes)
-    df_metrics['Evaluator'] = pd.Categorical(df_metrics['Evaluator'], categories=evalautor_types)
+    evaluator_metrics = [model, labelClass, evaluator_type, testing_time, accuracy,
+                         precision, recall, f1]
 
-    df_metrics.sort_values(['Synth', 'Label Classes', 'Evaluator'], inplace=True)
+    #########################################################
+    #         Saving Metrics and Results                     #
+    #########################################################
 
-    df_metrics.to_json(path_or_buf=report_dir + '/synth_evaluator_metrics.json', orient='index')
+    def save_results(evaluator_metrics):
+        # Get the current timestamp
+        timestamp = time.strftime("%Y%m%d%H%M%S")
 
-    synth_train_data.to_csv(f'../results/synthetic_EVALUATION_{model}_{evaluator_type}_{labelClass}_{timestamp}.csv', index=False)
-    print("GAN reports saved successfully.")
+        # Debugging: Print the column names and evaluator_metrics list
+        print("DataFrame columns:", df_metrics.columns)
+        print("Evaluator metrics:", evaluator_metrics)
 
-# Call save_results with the evaluator_metrics list
-save_results(evaluator_metrics)
+        # Add metrics to dataframe and display
+        update_row = df_metrics.loc[(df_metrics['Synth'] == model) &
+                                    (df_metrics['Label Classes'] == labelClass) &
+                                    (df_metrics['Evaluator'] == evaluator_type)]
 
-#########################################################
-# Graphs and Diagrams                                   #
-#########################################################
+        if update_row.empty:
+            print("No existing record found. Adding new entry.")
+            # No previous record
+            df_metrics.loc[len(df_metrics.index)] = evaluator_metrics
 
-# Retrieve label mapping to show names on the confusion matrix
-label_names = [label_mapping[label] for label in sorted(label_mapping)]
+            print(f'{evaluator_type} / {model} / {labelClass} Metrics')
+            # display(df_metrics.loc[len(df_metrics.index) - 1])
 
-# # Plotting the confusion matrix with label names
-# fig, ax = plt.subplots(figsize=(12, 8))  # Adjust the figure size as needed
-# sns.heatmap(conf_matrix, annot=False, fmt='d', cmap='Blues', xticklabels=label_names, yticklabels=label_names, ax=ax)
-#
-# # Set axis labels with rotation for x-axis labels
-# ax.set_xticklabels(label_names, rotation=45, ha="right")  # Rotate x-axis labels for better visibility
-# ax.set_yticklabels(label_names)
-#
-# # Adjust the margins and layout
-# plt.tight_layout()
-#
-# # Setting labels and title
-# ax.set_xlabel('Predicted labels', fontsize=12)
-# ax.set_ylabel('True labels', fontsize=12)
-# ax.set_title(f'{evaluator_type} Evaluation', fontsize=14)
-#
-# plt.show()
+        else:
+            # Previous record exists, update it
+            print("Existing record found. Updating entry.")
+            df_metrics.loc[update_row.index, :] = evaluator_metrics
 
-print(f"Generation time for Balanced Synthetic Dataset: {generation_time:.20f} seconds")
-print(f"Training time for Model: {training_time:.20f} seconds")
-print(f"Evaluation time for Real Dataset: {testing_time:.20f} seconds")
+            print(f'{evaluator_type} / {model} / {labelClass} Metrics')
+            # display(df_metrics.loc[(df_metrics['Synth'] == model) &
+            #                        (df_metrics['Label Classes'] == labelClass) &
+            #                        (df_metrics['Evaluator'] == evaluator_type)])
 
+        # Save combined report
+        df_metrics['Synth'] = pd.Categorical(df_metrics['Synth'], categories=synth_categories)
+        df_metrics['Label Classes'] = pd.Categorical(df_metrics['Label Classes'], categories=label_classes)
+        df_metrics['Evaluator'] = pd.Categorical(df_metrics['Evaluator'], categories=evalautor_types)
 
+        df_metrics.sort_values(['Synth', 'Label Classes', 'Evaluator'], inplace=True)
+
+        df_metrics.to_json(path_or_buf=report_dir + '/synth_evaluator_metrics.json', orient='index')
+
+        synth_train_data.to_csv(f'../results/synthetic_EVALUATION_{model}_{evaluator_type}_{labelClass}_{timestamp}.csv', index=False)
+        print("GAN reports saved successfully.")
+
+    # Call save_results with the evaluator_metrics list
+    save_results(evaluator_metrics)
+
+    print(f"Generation time for Balanced Synthetic Dataset: {generation_time:.20f} seconds")
+    print(f"Training time for Model: {training_time:.20f} seconds")
+    print(f"Evaluation time for Real Dataset: {testing_time:.20f} seconds")
+
+print(f"evaluation done for {model} {labelClass}")
