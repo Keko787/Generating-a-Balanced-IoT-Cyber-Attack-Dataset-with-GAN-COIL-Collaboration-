@@ -80,7 +80,7 @@ model = "CTGAN"  # input
 evalautor_types = ['XGBoost', 'LogisticRegression', 'Perceptron', 'AdaBoost', 'RandomForest', 'DeepNeuralNetwork', 'KNearestNeighbor']
 
 label_classes = ['33+1', '7+1', '1+1']
-labelClass = "1+1"  # input
+labelClass = "33+1"  # input
 
 if model == "CWGANGP":
     if labelClass == '33+1':
@@ -126,9 +126,9 @@ if model == "CTGAN":
     if labelClass == '33+1':
         print(model, " ", labelClass)
         # loading GAN
-        synth = RegularSynthesizer.load('../GAN_models/cyberattack_ctgan_model_3_specific1.pkl')  # input
+        synth = RegularSynthesizer.load('../GAN_models/cyberattack_ctgan_model_3_specific2.pkl')  # input
         # loading Scaler
-        scaler = joblib.load('../scalar_models/MinMaxScaler_ctGANGeneral.pkl')  # input
+        scaler = joblib.load('../scalar_models/MinMaxScalerCTS_20240521194349.pkl')  # input
     if labelClass == '7+1':
         print(model, " ", labelClass)
         # loading GAN
