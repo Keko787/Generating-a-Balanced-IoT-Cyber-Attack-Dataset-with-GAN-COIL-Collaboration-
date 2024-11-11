@@ -2,5 +2,4 @@
 
 Paper Link: [https://www.researchgate.net/publication/384221099_Enhancing_Autonomous_Intrusion_Detection_System_with_Generative_Adversarial_Networks](https://ieeexplore.ieee.org/document/10678662)
 
-Please Check Master branch
 
