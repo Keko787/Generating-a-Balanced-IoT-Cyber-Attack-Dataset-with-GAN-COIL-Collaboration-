@@ -1,0 +1,4 @@
+{
+    "training_time_seconds": 9082.653100013733,
+    "generation_time_seconds": 0.0666043758392334
+}

@@ -1,0 +1,138 @@
+[
+    {
+        "Log": 0,
+        "timestamp": "2024-05-13T12:34:09.519189",
+        "cpu_usage_percent": 10.8,
+        "memory_usage_percent": 69.5,
+        "memory_total_GB": 31.915748596191406,
+        "gpus": [
+            {
+                "id": 0,
+                "name": "NVIDIA GeForce RTX 3080 Ti",
+                "load_percent": 13.0,
+                "memory_used_MB": 992.0,
+                "memory_total_MB": 12288.0,
+                "temperature_C": 54.0
+            }
+        ]
+    },
+    {
+        "Log": 1,
+        "timestamp": "2024-05-13T12:34:10.590765",
+        "cpu_usage_percent": 8.5,
+        "memory_usage_percent": 83.0,
+        "memory_total_GB": 31.915748596191406,
+        "gpus": [
+            {
+                "id": 0,
+                "name": "NVIDIA GeForce RTX 3080 Ti",
+                "load_percent": 2.0,
+                "memory_used_MB": 992.0,
+                "memory_total_MB": 12288.0,
+                "temperature_C": 54.0
+            }
+        ]
+    },
+    {
+        "Log": 2,
+        "timestamp": "2024-05-13T12:34:11.662505",
+        "cpu_usage_percent": 11.4,
+        "memory_usage_percent": 78.1,
+        "memory_total_GB": 31.915748596191406,
+        "gpus": [
+            {
+                "id": 0,
+                "name": "NVIDIA GeForce RTX 3080 Ti",
+                "load_percent": 2.0,
+                "memory_used_MB": 992.0,
+                "memory_total_MB": 12288.0,
+                "temperature_C": 54.0
+            }
+        ]
+    },
+    {
+        "Log": 3,
+        "timestamp": "2024-05-13T12:34:12.732018",
+        "cpu_usage_percent": 14.9,
+        "memory_usage_percent": 82.0,
+        "memory_total_GB": 31.915748596191406,
+        "gpus": [
+            {
+                "id": 0,
+                "name": "NVIDIA GeForce RTX 3080 Ti",
+                "load_percent": 2.0,
+                "memory_used_MB": 992.0,
+                "memory_total_MB": 12288.0,
+                "temperature_C": 54.0
+            }
+        ]
+    },
+    {
+        "Log": 4,
+        "timestamp": "2024-05-13T12:34:13.788745",
+        "cpu_usage_percent": 12.1,
+        "memory_usage_percent": 79.2,
+        "memory_total_GB": 31.915748596191406,
+        "gpus": [
+            {
+                "id": 0,
+                "name": "NVIDIA GeForce RTX 3080 Ti",
+                "load_percent": 2.0,
+                "memory_used_MB": 992.0,
+                "memory_total_MB": 12288.0,
+                "temperature_C": 54.0
+            }
+        ]
+    },
+    {
+        "Log": 5,
+        "timestamp": "2024-05-13T12:34:14.854399",
+        "cpu_usage_percent": 8.7,
+        "memory_usage_percent": 81.9,
+        "memory_total_GB": 31.915748596191406,
+        "gpus": [
+            {
+                "id": 0,
+                "name": "NVIDIA GeForce RTX 3080 Ti",
+                "load_percent": 2.0,
+                "memory_used_MB": 992.0,
+                "memory_total_MB": 12288.0,
+                "temperature_C": 54.0
+            }
+        ]
+    },
+    {
+        "Log": 6,
+        "timestamp": "2024-05-13T12:34:15.916618",
+        "cpu_usage_percent": 14.4,
+        "memory_usage_percent": 86.0,
+        "memory_total_GB": 31.915748596191406,
+        "gpus": [
+            {
+                "id": 0,
+                "name": "NVIDIA GeForce RTX 3080 Ti",
+                "load_percent": 42.0,
+                "memory_used_MB": 993.0,
+                "memory_total_MB": 12288.0,
+                "temperature_C": 54.0
+            }
+        ]
+    },
+    {
+        "Log": 7,
+        "timestamp": "2024-05-13T12:34:16.984736",
+        "cpu_usage_percent": 11.8,
+        "memory_usage_percent": 88.8,
+        "memory_total_GB": 31.915748596191406,
+        "gpus": [
+            {
+                "id": 0,
+                "name": "NVIDIA GeForce RTX 3080 Ti",
+                "load_percent": 7.000000000000001,
+                "memory_used_MB": 993.0,
+                "memory_total_MB": 12288.0,
+                "temperature_C": 54.0
+            }
+        ]
+    }
+]

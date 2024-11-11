@@ -1,0 +1,172 @@
+[
+    {
+        "Log": 29,
+        "timestamp": "2024-05-15T18:55:08.161902",
+        "cpu_usage_percent": 5.0,
+        "memory_usage_percent": 16.5,
+        "memory_total_GB": 31.24066925048828,
+        "gpus": [
+            {
+                "id": 0,
+                "name": "NVIDIA GeForce RTX 3080",
+                "load_percent": 41.0,
+                "memory_used_MB": 9645.0,
+                "memory_total_MB": 10240.0,
+                "temperature_C": 51.0
+            }
+        ]
+    },
+    {
+        "Log": 59,
+        "timestamp": "2024-05-15T18:55:40.255443",
+        "cpu_usage_percent": 5.0,
+        "memory_usage_percent": 16.5,
+        "memory_total_GB": 31.24066925048828,
+        "gpus": [
+            {
+                "id": 0,
+                "name": "NVIDIA GeForce RTX 3080",
+                "load_percent": 39.0,
+                "memory_used_MB": 9645.0,
+                "memory_total_MB": 10240.0,
+                "temperature_C": 53.0
+            }
+        ]
+    },
+    {
+        "Log": 89,
+        "timestamp": "2024-05-15T18:56:12.318606",
+        "cpu_usage_percent": 5.0,
+        "memory_usage_percent": 16.5,
+        "memory_total_GB": 31.24066925048828,
+        "gpus": [
+            {
+                "id": 0,
+                "name": "NVIDIA GeForce RTX 3080",
+                "load_percent": 38.0,
+                "memory_used_MB": 9645.0,
+                "memory_total_MB": 10240.0,
+                "temperature_C": 55.0
+            }
+        ]
+    },
+    {
+        "Log": 119,
+        "timestamp": "2024-05-15T18:56:44.498582",
+        "cpu_usage_percent": 5.0,
+        "memory_usage_percent": 16.5,
+        "memory_total_GB": 31.24066925048828,
+        "gpus": [
+            {
+                "id": 0,
+                "name": "NVIDIA GeForce RTX 3080",
+                "load_percent": 39.0,
+                "memory_used_MB": 9645.0,
+                "memory_total_MB": 10240.0,
+                "temperature_C": 56.0
+            }
+        ]
+    },
+    {
+        "Log": 149,
+        "timestamp": "2024-05-15T18:57:16.628572",
+        "cpu_usage_percent": 5.0,
+        "memory_usage_percent": 16.5,
+        "memory_total_GB": 31.24066925048828,
+        "gpus": [
+            {
+                "id": 0,
+                "name": "NVIDIA GeForce RTX 3080",
+                "load_percent": 39.0,
+                "memory_used_MB": 9651.0,
+                "memory_total_MB": 10240.0,
+                "temperature_C": 57.0
+            }
+        ]
+    },
+    {
+        "Log": 179,
+        "timestamp": "2024-05-15T18:57:48.766071",
+        "cpu_usage_percent": 5.1,
+        "memory_usage_percent": 16.6,
+        "memory_total_GB": 31.24066925048828,
+        "gpus": [
+            {
+                "id": 0,
+                "name": "NVIDIA GeForce RTX 3080",
+                "load_percent": 40.0,
+                "memory_used_MB": 9646.0,
+                "memory_total_MB": 10240.0,
+                "temperature_C": 59.0
+            }
+        ]
+    },
+    {
+        "Log": 209,
+        "timestamp": "2024-05-15T18:58:21.005674",
+        "cpu_usage_percent": 5.1,
+        "memory_usage_percent": 16.6,
+        "memory_total_GB": 31.24066925048828,
+        "gpus": [
+            {
+                "id": 0,
+                "name": "NVIDIA GeForce RTX 3080",
+                "load_percent": 37.0,
+                "memory_used_MB": 9633.0,
+                "memory_total_MB": 10240.0,
+                "temperature_C": 59.0
+            }
+        ]
+    },
+    {
+        "Log": 239,
+        "timestamp": "2024-05-15T18:58:53.234665",
+        "cpu_usage_percent": 5.0,
+        "memory_usage_percent": 16.6,
+        "memory_total_GB": 31.24066925048828,
+        "gpus": [
+            {
+                "id": 0,
+                "name": "NVIDIA GeForce RTX 3080",
+                "load_percent": 31.0,
+                "memory_used_MB": 9639.0,
+                "memory_total_MB": 10240.0,
+                "temperature_C": 57.0
+            }
+        ]
+    },
+    {
+        "Log": 269,
+        "timestamp": "2024-05-15T18:59:25.762940",
+        "cpu_usage_percent": 5.1,
+        "memory_usage_percent": 16.6,
+        "memory_total_GB": 31.24066925048828,
+        "gpus": [
+            {
+                "id": 0,
+                "name": "NVIDIA GeForce RTX 3080",
+                "load_percent": 23.0,
+                "memory_used_MB": 9662.0,
+                "memory_total_MB": 10240.0,
+                "temperature_C": 55.0
+            }
+        ]
+    },
+    {
+        "Log": 299,
+        "timestamp": "2024-05-15T18:59:58.645367",
+        "cpu_usage_percent": 5.1,
+        "memory_usage_percent": 16.6,
+        "memory_total_GB": 31.24066925048828,
+        "gpus": [
+            {
+                "id": 0,
+                "name": "NVIDIA GeForce RTX 3080",
+                "load_percent": 38.0,
+                "memory_used_MB": 9655.0,
+                "memory_total_MB": 10240.0,
+                "temperature_C": 54.0
+            }
+        ]
+    }
+]

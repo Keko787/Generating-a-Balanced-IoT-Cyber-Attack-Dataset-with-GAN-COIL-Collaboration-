@@ -1,0 +1,19 @@
+[
+    {
+        "Log": 29,
+        "timestamp": "2024-05-13T17:35:32.685408",
+        "cpu_usage_percent": 95.8,
+        "memory_usage_percent": 46.3,
+        "memory_total_GB": 31.915748596191406,
+        "gpus": [
+            {
+                "id": 0,
+                "name": "NVIDIA GeForce RTX 3080 Ti",
+                "load_percent": 1.0,
+                "memory_used_MB": 1539.0,
+                "memory_total_MB": 12288.0,
+                "temperature_C": 53.0
+            }
+        ]
+    }
+]
