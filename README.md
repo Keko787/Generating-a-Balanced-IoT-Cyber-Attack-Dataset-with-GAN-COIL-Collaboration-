@@ -16,7 +16,14 @@
 * Please Refer to contributions and contributors.md
 
 ## Publication
-Paper Link: [https://www.researchgate.net/publication/384221099_Enhancing_Autonomous_Intrusion_Detection_System_with_Generative_Adversarial_Networks](https://ieeexplore.ieee.org/document/10678662)
+_**Enhancing Autonomous Intrusion Detection System with Generative Adversarial Networks:**_ 
+  * **Paper:** [https://www.researchgate.net/publication/384221099_Enhancing_Autonomous_Intrusion_Detection_System_with_Generative_Adversarial_Networks](https://ieeexplore.ieee.org/document/10678662)
+  * **Github Repo:** https://github.com/Keko787/Generating-a-Balanced-IoT-Cyber-Attack-Dataset-with-GAN-COIL-Collaboration-
+
+## Previous Works
+
+**_Enhancing Drone Video Analytics Security Management using an AERPAW Testbed:_** 
+* **Paper:** https://ieeexplore.ieee.org/document/10620812
 
 ## Purpose
 * To develop a Generative Adversarial Network to classify fake traffic in network traffic feeds and augment training data with realist synthetic data to balance the dataset and provide robust data.
