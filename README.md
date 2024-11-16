@@ -36,4 +36,4 @@ Paper Link: [https://www.researchgate.net/publication/384221099_Enhancing_Autono
 
 * Download the CICIOT dataset extract and put it into the repo directory under a folder as _archive_ or _parent_dir/archive_
 
-* run the .oy files in parent dir
+* run the .py files in parent dir
