@@ -2,15 +2,15 @@
 
 ## Faculty Advisors:
 
-* **Dr. Qu, Chenqi (2023-2025)**
+* **Dr. Qu, Chenqi**
 
-* **Dr. Prasad, Calyam (2023-2025)**
+* **Dr. Prasad, Calyam**
 
-* **Dr. Mazzola Luca (2024)**
+* **Dr. Mazzola Luca**
 
 ## Mentor:
 
-* **Kevin Kostage (2023-2025):** Deep Learning Engineer, End-to-End Engineer, Cloud-Network Specialist
+* **Kevin Kostage:** Deep Learning Engineer, End-to-End Engineer, Cloud-Network Specialist
 
 ## Undergraduate Researchers:
 * Please Refer to contributions and contributors.md
