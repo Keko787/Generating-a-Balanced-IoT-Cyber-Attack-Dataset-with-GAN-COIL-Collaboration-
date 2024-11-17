@@ -25,6 +25,13 @@ _**Enhancing Autonomous Intrusion Detection System with Generative Adversarial N
 **_Enhancing Drone Video Analytics Security Management using an AERPAW Testbed:_** 
 * **Paper:** https://ieeexplore.ieee.org/document/10620812
 
+## Posters
+
+![image](https://github.com/user-attachments/assets/1c8c1c65-8c7d-4a22-9ed3-241737019a89)
+![image](https://github.com/user-attachments/assets/a46340b2-2517-47f0-bb58-af79cf45af99)
+
+
+
 ## Purpose
 * To develop a Generative Adversarial Network to classify fake traffic in network traffic feeds and augment training data with realist synthetic data to balance the dataset and provide robust data.
 * To develop and discover the most effective and efficient GAN variant
