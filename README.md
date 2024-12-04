@@ -12,8 +12,15 @@
 
 * **Kevin Kostage:** Deep Learning Engineer, End-to-End Engineer, Cloud-Network Specialist
 
-## Undergraduate Researchers:
+## Undergraduate Researchers: 
+
 * Please Refer to contributions and contributors.md
+
+* The bulk of contributions made were in Researching and Exploring Articles such as discovering the CICIOT2023 dataset. Weekly Homework assignments were optimizing or developing their version of functions and processes such as loading and processing tabular datasets for models, model structures, compiling models, and training. We also had workshops configuring virtual environments with Anaconda and CUDA.
+
+* Students contributed 10 hours a week between March 1st - April 24th. Awarded Best Class Presentation.
+
+* Contributions from HW assignments were submitted from Keko787.
 
 ## Publication
 _**Enhancing Autonomous Intrusion Detection System with Generative Adversarial Networks:**_ 
